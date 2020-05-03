@@ -1,4 +1,7 @@
-program test;
+program aplub;
+var
+    a, b: integer;    
 begin
-    write(5);
+    read(a, b);
+    writeln(a + b);
 end.
