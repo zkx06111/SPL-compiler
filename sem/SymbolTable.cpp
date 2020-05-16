@@ -10,6 +10,7 @@ SymbolTable::SymbolTable() {
     var_t.emplace_back();
     const_t.emplace_back();
     func_t.emplace_back();
+    label_t.emplace_back();
 
     NameType("integer", Type::Int());
     NameType("real", Type::Real());
@@ -17,7 +18,16 @@ SymbolTable::SymbolTable() {
     NameType("char", Type::Char());
     NameType("string", Type::String());
 
-    // TODO - add sys-func
+    id_t.back().Insert("abs");
+    id_t.back().Insert("chr");
+    id_t.back().Insert("odd");
+    id_t.back().Insert("ord");
+    id_t.back().Insert("pred");
+    id_t.back().Insert("sqr");
+    id_t.back().Insert("sqrt");
+    id_t.back().Insert("succ");
+    id_t.back().Insert("write");
+    id_t.back().Insert("writeln");
 }
 
 void SymbolTable::NewScope() {
@@ -26,6 +36,7 @@ void SymbolTable::NewScope() {
     var_t.emplace_back();
     const_t.emplace_back();
     func_t.emplace_back();
+    label_t.emplace_back();
 }
 
 void SymbolTable::EndScope() {
@@ -34,6 +45,7 @@ void SymbolTable::EndScope() {
     var_t.pop_back();
     const_t.pop_back();
     func_t.pop_back();
+    label_t.pop_back();
 }
 
 bool SymbolTable::CheckId(const std::string &name) const {
@@ -85,13 +97,22 @@ bool SymbolTable::CheckFunc(const std::string &name) const {
     return false;
 }
 
+bool SymbolTable::CheckLabel(int label) const {
+    for (auto it = label_t.rbegin(); it != label_t.rend(); it++) {
+        if (it->Check(label)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 Type SymbolTable::GetType(const std::string &name) const {
     for (auto it = type_t.rbegin(); it != type_t.rend(); it++) {
         if (it->CheckType(name)) {
             return it->GetType(name);
         }
     }
-    return Type::Void();
+    throw SemError("no type named '" + name + "'");
 }
 
 Type SymbolTable::GetEnumType(const std::string &name) const {
@@ -100,7 +121,7 @@ Type SymbolTable::GetEnumType(const std::string &name) const {
             return it->GetConstType(name);
         }
     }
-    return Type::Void();
+    throw SemError("no enum string named '" + name + "'");
 }
 
 Type SymbolTable::GetVarType(const std::string &name) const {
@@ -109,7 +130,7 @@ Type SymbolTable::GetVarType(const std::string &name) const {
             return it->GetVarType(name);
         }
     }
-    return Type::Void();
+    throw SemError("no variable named '" + name + "'");
 }
 
 Type SymbolTable::GetConstType(const std::string &name) const {
@@ -118,7 +139,7 @@ Type SymbolTable::GetConstType(const std::string &name) const {
             return it->GetConstType(name);
         }
     }
-    return Type::Void();
+    throw SemError("no constant named '" + name + "'");
 }
 
 Func SymbolTable::GetFunc(const std::string &name) const {
@@ -127,7 +148,7 @@ Func SymbolTable::GetFunc(const std::string &name) const {
             return it->GetFunc(name);
         }
     }
-    return Func { Type::Void(), { Type::Void() } };
+    throw SemError("no function named '" + name + "'");
 }
 
 int SymbolTable::GetConstValI(const std::string &name) const {
@@ -136,7 +157,7 @@ int SymbolTable::GetConstValI(const std::string &name) const {
             return it->GetConstValI(name);
         }
     }
-    return 0;
+    throw SemError("no constant named '" + name + "'");
 }
 
 double SymbolTable::GetConstValR(const std::string &name) const {
@@ -145,7 +166,7 @@ double SymbolTable::GetConstValR(const std::string &name) const {
             return it->GetConstValR(name);
         }
     }
-    return 0;
+    throw SemError("no constant named '" + name + "'");
 }
 
 char SymbolTable::GetConstValC(const std::string &name) const {
@@ -154,7 +175,7 @@ char SymbolTable::GetConstValC(const std::string &name) const {
             return it->GetConstValC(name);
         }
     }
-    return 0;
+    throw SemError("no constant named '" + name + "'");
 }
 
 bool SymbolTable::GetConstValB(const std::string &name) const {
@@ -163,7 +184,7 @@ bool SymbolTable::GetConstValB(const std::string &name) const {
             return it->GetConstValB(name);
         }
     }
-    return false;
+    throw SemError("no constant named '" + name + "'");
 }
 
 std::string SymbolTable::GetConstValS(const std::string &name) const {
@@ -172,7 +193,7 @@ std::string SymbolTable::GetConstValS(const std::string &name) const {
             return it->GetConstValS(name);
         }
     }
-    return "";
+    throw SemError("no constant named '" + name + "'");
 }
 
 Enum SymbolTable::GetEnum(const Type &type) const {
@@ -188,7 +209,7 @@ Record SymbolTable::GetRecord(const Type &type) const {
     return type_t[type.depth].GetRecord(type.ind);
 }
 
-Result<Type> SymbolTable::NewEnum(const std::vector<std::string> &ids) {
+Type SymbolTable::NewEnum(const std::vector<std::string> &ids) {
     std::unordered_map<std::string, int> ele;
     int val = 0;
     for (const auto &id : ids) {
@@ -202,190 +223,181 @@ Result<Type> SymbolTable::NewEnum(const std::vector<std::string> &ids) {
     for (const auto &[name, _] : ele) {
         NewConst(name, type, enm);
     }
-    return { type, "" };
+    return type;
 }
 
-Result<Type> SymbolTable::NewIntSubrange(int l, int r) {
+Type SymbolTable::NewIntSubrange(int l, int r) {
     if (l > r) {
-        return { Type::Void(), "lower bound is greater than upper bound" };
+        throw SemError("lower bound is greater than upper bound");
     }
     Type type = type_t.back().AddSubrange(Subrange { Type::Int(), l, r });
-    return { type, "" };
+    return type;
 }
 
-Result<Type> SymbolTable::NewCharSubrange(char l, char r) {
+Type SymbolTable::NewCharSubrange(char l, char r) {
     if (l > r) {
-        return { Type::Void(), "lower bound is greater than upper bound" };
+        throw SemError("lower bound is greater than upper bound");
     }
     Type type = type_t.back().AddSubrange(Subrange { Type::Char(), l, r });
-    return { type, "" };
+    return type;
 }
 
-Result<Type> SymbolTable::NewBoolSubrange(bool l, bool r) {
+Type SymbolTable::NewBoolSubrange(bool l, bool r) {
     int lv = l, rv = r;
     if (lv > rv) {
-        return { Type::Void(), "lower bound is greater than upper bound" };
+        throw SemError("lower bound is greater than upper bound");
     }
     Type type = type_t.back().AddSubrange(Subrange { Type::Bool(), lv, rv });
-    return { type, "" };
+    return type;
 }
 
-Result<Type>
-SymbolTable::NewEnumSubrange(const std::string &l, const std::string &r) {
+Type SymbolTable::NewEnumSubrange(const std::string &l, const std::string &r) {
     if (!CheckEnum(l)) {
-        return { Type::Void(), "'" + l + "' is not an enum element" };
+        throw SemError("'" + l + "' is not an enum element");
     }
     if (!CheckEnum(r)) {
-        return { Type::Void(), "'" + r + "' is not an enum element" };
+        throw SemError("'" + r + "' is not an enum element");
     }
     auto le = GetEnumType(l), re = GetEnumType(r);
     if (le != re) {
-        return { Type::Void(),
-            "'" + l + "' and '" + r + "' are not in the same enum type"};
+        throw SemError(
+            "'" + l + "' and '" + r + "' are not in the same enum type");
     }
     int lv = GetConstValI(l);
     int rv = GetConstValI(r);
     Type type = type_t.back().AddSubrange(Subrange(le, lv, rv));
-    return { type, "" };
+    return type;
 }
 
-Result<Type> SymbolTable::NewArray(const Type &ind_type, const Type &ele_type) {
+Type SymbolTable::NewArray(const Type &ind_type, const Type &ele_type) {
     if (!CanBeArrayIndType(ind_type)) {
-        return { Type::Void(), "not a valid subscript type" };
+        throw SemError("invalid subscript type");
     }
     if (IsVoid(ele_type)) {
-        return { Type::Void(), "unknown element type" };
+        throw SemError("unknown element type");
     }
     Type type = type_t.back().AddArray(Array(ind_type, ele_type));
-    return { type, "" };
+    return type;
 }
 
-Result<Type>
+Type
 SymbolTable::NewRecord(const std::vector<std::pair<std::string, Type>> &data) {
     std::unordered_set<std::string> names;
     for (const auto &[name, type] : data) {
         if (names.count(name) != 0) {
-            return { Type::Void(),
-                "duplicated identifier '" + name + "' in record definition" };
+            throw SemError(
+                "duplicated identifier '" + name + "' in record definition");
         } else {
             names.insert(name);
         }
 
         if (IsVoid(type)) {
-            return { Type::Void(), "'" + name + "' has an unknown type" };
+            throw SemError("'" + name + "' has an unknown type");
         }
     }
     Type type = type_t.back().AddRecord(Record(data));
-    return { type, "" };
+    return type;
 }
 
-std::string SymbolTable::NameType(const std::string &name, const Type &type) {
+void SymbolTable::NameType(const std::string &name, const Type &type) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
     if (IsVoid(type)) {
-        return "'" + name + "' refers to an unknown type";
+        throw SemError("'" + name + "' refers to an unknown type");
     }
 
     type_t.back().NameType(name, type);
-    return "";
 }
 
-std::string SymbolTable::NewVariable(const std::string &name,
+void SymbolTable::NewVariable(const std::string &name,
         const Type &type) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
     if (IsVoid(type)) {
-        return "'" + name + "' has an unknown type";
+        throw SemError("'" + name + "' has an unknown type");
     }
 
     var_t.back().AddVar(name, type);
-    return "";
 }
 
-std::string SymbolTable::NewConst(const std::string &name, int val) {
+void SymbolTable::NewConst(const std::string &name, int val) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, val);
-    return "";
 }
 
-std::string SymbolTable::NewConst(const std::string &name, double val) {
+void SymbolTable::NewConst(const std::string &name, double val) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, val);
-    return "";
 }
 
-std::string SymbolTable::NewConst(const std::string &name, bool val) {
+void SymbolTable::NewConst(const std::string &name, bool val) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, val);
-    return "";
 }
 
-std::string SymbolTable::NewConst(const std::string &name, char val) {
+void SymbolTable::NewConst(const std::string &name, char val) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, val);
-    return "";
 }
 
-std::string
+void
 SymbolTable::NewConst(const std::string &name, const std::string &val) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, val);
-    return "";
 }
 
-std::string SymbolTable::NewConst(const std::string &name, const Type &type,
+void SymbolTable::NewConst(const std::string &name, const Type &type,
         const Enum &enm) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
 
     id_t.back().Insert(name);
     const_t.back().AddConst(name, type, enm);
-    return "";
 }
 
-std::string SymbolTable::NewProc(const std::string &name,
+void SymbolTable::NewProc(const std::string &name,
         const std::vector<std::pair<std::string, Type>> &args) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
 
     std::unordered_set<std::string> names;
     for (const auto &[arg_name, arg_type] : args) {
         if (names.count(arg_name) != 0) {
-            return "duplicated identifier '" + arg_name +
-                "' in procedure definition";
+            throw SemError("duplicated identifier '" + arg_name +
+                "' in procedure definition");
         } else {
             names.insert(arg_name);
         }
 
         if (IsVoid(arg_type)) {
-            return "'" + arg_name + "' has an unknown type";
+            throw SemError("'" + arg_name + "' has an unknown type");
         }
     }
 
@@ -400,31 +412,29 @@ std::string SymbolTable::NewProc(const std::string &name,
     for (const auto &[arg_name, arg_type] : args) {
         NewVariable(arg_name, arg_type);
     }
-
-    return "";
 }
 
-std::string SymbolTable::NewFunc(const std::string &name, const Type &ret,
+void SymbolTable::NewFunc(const std::string &name, const Type &ret,
         const std::vector<std::pair<std::string, Type>> &args) {
     if (CheckId(name)) {
-        return "duplicated identifier '" + name + "' in this scope";
+        throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
     if (IsVoid(ret)) {
-        return "return type of '" + name + "' is an unknown type";
+        throw SemError("return type of '" + name + "' is an unknown type");
     }
 
     std::unordered_set<std::string> names;
     for (const auto &[arg_name, arg_type] : args) {
         if (names.count(arg_name) != 0 || name == arg_name) {
-            return "duplicated identifier '" + arg_name +
-                "' in function definition";
+            throw SemError("duplicated identifier '" + arg_name +
+                "' in function definition");
         } else {
             names.insert(arg_name);
         }
 
         if (IsVoid(arg_type)) {
-            return "'" + arg_name + "' has an unknown type";
+            throw SemError("'" + arg_name + "' has an unknown type");
         }
     }
 
@@ -440,8 +450,21 @@ std::string SymbolTable::NewFunc(const std::string &name, const Type &ret,
     for (const auto &[arg_name, arg_type] : args) {
         NewVariable(arg_name, arg_type);
     }
+}
 
-    return "";
+void SymbolTable::NewLabel(int label) {
+    if (label_t.back().Check(label)) {
+        throw SemError("duplicated label declaration '" + std::to_string(label)
+            + "'in this scope");
+    }
+    label_t.back().Insert(label);
+}
+
+void SymbolTable::NeedLabel(int label) const {
+    if (!CheckLabel(label)) {
+        throw SemError(
+            "no label called '" + std::to_string(label) + "' is declared");
+    }
 }
 
 SymbolTable sym_t;

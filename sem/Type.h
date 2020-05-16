@@ -41,8 +41,6 @@ struct Enum {
     int GetEnumVal(const std::string &name) const;
 
     std::unordered_map<std::string, int> ele;
-
-    friend class TypeTable;
 };
 
 struct Subrange {
@@ -62,6 +60,7 @@ struct Array {
     Type GetIndexType() const;
     Type GetElementType() const;
     bool CanTakeSub(const Type &type) const;
+    void TakeSub(const Type &type) const;
 
     Type ind_type, ele_type;
 };

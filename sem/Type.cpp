@@ -36,6 +36,9 @@ bool Enum::Contains(const std::string &name) const {
 }
 
 int Enum::GetEnumVal(const std::string &name) const {
+    if (!Contains(name)) {
+        throw SemError("'" + name + "' is not a member of this enum");
+    }
     return ele.at(name);
 }
 
@@ -59,6 +62,12 @@ bool Array::CanTakeSub(const Type &type) const {
     return IsAlmostSame(type, ind_type);
 }
 
+void Array::TakeSub(const Type &type) const {
+    if (!CanTakeSub(type)) {
+        throw SemError("invalid subscript type");
+    }
+}
+
 Record::Record(const std::vector<std::pair<std::string, Type>> &data) {
     this->data = data;
     int ind = 0;
@@ -73,6 +82,9 @@ bool Record::Contains(const std::string &name) const {
 }
 
 Type Record::GetDataType(const std::string &name) const {
+    if (!Contains(name)) {
+        throw SemError("'" + name + "' is not a member of this record");
+    }
     return data[name2ind.at(name)].second;
 }
 

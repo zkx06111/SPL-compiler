@@ -33,9 +33,9 @@ bool CanBeArrayIndType(const Type &type) {
         type.type == Type::ENUM;
 }
 
-Type CanDoAdd(const Type &a, const Type &b) {
+Type DoAdd(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
@@ -54,11 +54,11 @@ Type CanDoAdd(const Type &a, const Type &b) {
             return Type::String();
         }
     }
-    return Type::Void();
+    throw SemError("lhs type and rhs type don't match");
 }
 Type CanDoSub(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
@@ -72,35 +72,35 @@ Type CanDoSub(const Type &a, const Type &b) {
             return Type::Real();
         }
     }
-    return Type::Void();
+    throw SemError("lhs type and rhs type don't match");
 }
 Type CanDoMod(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
     if (ta == tb && ta.type == Type::INT) {
         return ta;
     } else {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
 }
 Type CanDoAnd(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
     if (ta == tb && (ta.type == Type::INT || ta.type == Type::BOOL)) {
         return ta;
     } else {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
 }
 Type CanDoCmp(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
-        return Type::Void();
+        throw SemError("lhs type and rhs type don't match");
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
@@ -113,23 +113,31 @@ Type CanDoCmp(const Type &a, const Type &b) {
     } else {
         if ((ta.type == Type::INT && tb.type == Type::REAL) ||
             (ta.type == Type::REAL && tb.type == Type::INT)) {
-            return Type::Real();
+            return Type::Bool();
         }
         if ((ta.type == Type::STRING && tb.type == Type::CHAR) ||
             (ta.type == Type::CHAR && tb.type == Type::STRING)) {
-            return Type::String();
+            return Type::Bool();
         }
     }
-    return Type::Void();
+    throw SemError("lhs type and rhs type don't match");
 }
 
-bool CanDoNot(const Type &type) {
+Type DoNot(const Type &type) {
     Type t = RemoveSubrange(type);
-    return t.type == Type::INT || t.type == Type::BOOL;
+    if (t.type == Type::INT || t.type == Type::BOOL) {
+        return t;
+    } else {
+        throw SemError("lhs type and rhs type don't match");
+    }
 }
-bool CanDoNeg(const Type &type) {
+Type DoNeg(const Type &type) {
     Type t = RemoveSubrange(type);
-    return t.type == Type::INT || t.type == Type::REAL;
+    if (t.type == Type::INT || t.type == Type::REAL) {
+        return t;
+    } else {
+        throw SemError("lhs type and rhs type don't match");
+    }
 }
 
 bool CanAssign(const Type &dst, const Type &src) {
@@ -138,7 +146,59 @@ bool CanAssign(const Type &dst, const Type &src) {
     }
     Type dt = RemoveSubrange(dst);
     Type st = RemoveSubrange(src);
-    return dt == st || (dt.type == Type::REAL && st.type == Type::INT);
+    if (dt == st || (dt.type == Type::REAL && st.type == Type::INT)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+Type DoAssign(const Type &dst, const Type &src) {
+    if (CanAssign(dst, src)) {
+        return dst;
+    } else {
+        throw SemError("can't do assignment from rhs type to lhs type");
+    }
+}
+
+Type DoAbs(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT || t.type == Type::REAL) {
+        return t;
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
+}
+Type DoChr(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT) {
+        return Type::Char();
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
+}
+Type DoOrd(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT || t.type == Type::ENUM) {
+        return Type::Int();
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
+}
+Type DoPred(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT || t.type == Type::ENUM) {
+        return t;
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
+}
+Type DoSqrt(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT || t.type == Type::REAL) {
+        return Type::Real();
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
 }
 
 }

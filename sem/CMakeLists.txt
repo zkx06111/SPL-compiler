@@ -8,6 +8,7 @@ add_library(sem
     VarTable.cpp
     ConstTable.cpp
     FuncTable.cpp
+    LabelTabke.cpp
 )
 
 target_include_directories(sem

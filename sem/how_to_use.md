@@ -30,7 +30,7 @@ target_link_libraries(${TARGET_NAME}
 
 ### New Type
 
-新建一个类型，返回值是 `std::pair<Type, std::string>`。成功返回相应类型，失败返回 void 类型，string 存错误信息。
+新建一个类型，返回值是 `Type`，即相应的类型。
 
 ```c++
 sem::sym_t.NewEnum(names); // name: vector<string>
@@ -42,7 +42,7 @@ sem::sym_t.NewArray(ind_type, ele_type); // ind_type, ele_type: Type
 sem::sym_t.NewRecord(data); // data: vector<pair<string, Type>>
 ```
 
-命名类型（即 `type xxx = blabla`），返回值是 `std::string`，记录失败信息，成功为 `""`。
+命名类型（即 `type xxx = blabla`）。
 
 ```c++
 sem::sym_t.NameType(name, type); // name: string, type: Type
@@ -61,7 +61,7 @@ sem::sym_t.EndScope();
 
 ### New Constant
 
-新建常量，返回值是 `std::string`。
+新建常量。
 
 ```c++
 sem::sym_t.NewConst(name, val); // name: string, val: int/double/bool/char/string
@@ -69,7 +69,7 @@ sem::sym_t.NewConst(name, val); // name: string, val: int/double/bool/char/strin
 
 ### New Variable
 
-新建变量，返回值是 `std::string`。
+新建变量。
 
 ```c++
 sem::sym_t.NewVarible(name, type); // name: string, type: Type
@@ -77,20 +77,36 @@ sem::sym_t.NewVarible(name, type); // name: string, type: Type
 
 ### New Function/Procedure
 
-新建函数，返回值是 `std::string`。会新建作用域。
+新建函数，会新建作用域。
 
 ```c++
 sem::sym_t.NewFunc(name, ret, args); // name: string, ret: Type, args: vector<pair<string, Type>>
 sem::sym_t.NewProc(name, args); // name: string, args: vector<pair<string, Type>>
 ```
 
+### Label
+
+新建一个跳转标签。
+
+```c++
+sem::sym_t.NewLabel(label); // label: int
+```
+
+需要用到一个标签（即 goto 语句）。
+
+```c++
+sem::sym_t.NeedLabel(label); // label: int
+```
+
 ### Check XXX
 
-检查名称为 blabla 的 Id/Type/Enum（指枚举定义的那些符号）/Var/Const/Func 是否存在。
+检查名称为 blabla 的 Id/Type/Enum/（指枚举定义的那些符号）/Var/Const/Func/Label 是否存在。
+
+可能不太会需要去调用。。。
 
 ### Get XXX
 
-获取名称为 blabla 的 xxx 的类型，返回值为 Type。Enum（指枚举定义的那些符号）
+获取名称为 blabla 的 xxx 的类型，返回值为 Type。Enum 指枚举定义的那些符号。
 
 ```c++
 sem::sym_t.GetType(name); // name: string
@@ -100,7 +116,7 @@ sem::sym_t.GetConstType(name); // name: string
 sem::sym_t.GetFunc(name); // name: string
 ```
 
-获取常数值。枚举算 int。
+获取常数值。枚举算作 int。
 
 ```c++
 int i = sem::sym_t.GetConstValI(name); // name: string
@@ -129,8 +145,14 @@ Record = sem::sym_t.GetRecord(type) // type: Type
 
 `RemoveSubrange(type)` 用于取出 Subrange 的类型，对其他类型无影响。
 
+其他还有二元运算符、一元运算符、取下标的检查，返回值均为该表达式的类型。
+
+系统函数的参数检查在此以 `DoXXX(type)` 的形式，返回值为该表达式的类型；自定义函数的参数检查是 `Func` 的方法 `ApplyArgs(vec)`，其中 `vec` 为 `vector<Type>`。
+
+## 异常
+
+所有错误以异常抛出，唯一的异常类型是 `sem::SemError`，其包含错误信息，不包含错误行号。
+
 ## TODO
 
-* [ ] add system function to table
-* [ ] label
-* [ ] maybe others...
+* maybe others...
