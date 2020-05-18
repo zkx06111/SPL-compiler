@@ -1,2 +1,5 @@
 .vscode
 tmp
+process.cpp
+a.out.dSYM
+.DS_Store
