@@ -1030,8 +1030,13 @@ void dfs(pTNode cur, pTNode par, int faid) {
     }
 }
 
-int main() {
+pTNode buildTree()
+{
     yyparse();
-    dfs(p, NULL, 0);
+    return p;
+}
+
+int main() {
+    dfs(buildTree(), NULL, 0);
     return 0;
 }
