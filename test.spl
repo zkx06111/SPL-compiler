@@ -1,0 +1,18 @@
+program aplub;
+label 2,3, 4, 7;
+const
+    int_c = 5;
+    bool_c = false;
+    char_c = 'c';
+    real_c = 5.5;
+type
+    int = integer;
+    qq = real;
+var
+    a, b: integer;
+begin
+    read(a);
+    read(b);
+    writeln(a + b);
+    writeln('a');
+end.

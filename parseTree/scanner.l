@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include "tree.h"
 #include "token.h"
-#define SETLVAL(x) yylval.t = newNode(token_names[x], curLineNum, NULL)
+#define SETLVAL(x) yylval.t = newNode(token_names[x], curLineNum, NULL, 0)
 int curLineNum = 1;
 
 void lex_error(char*, int);
 int yylex();
 %}
 
+LABEL label
 FALSE false
 MAXINT maxint
 TRUE true
@@ -89,9 +90,10 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 "mod" {SETLVAL(T_MOD); return MOD;}
 ".." {SETLVAL(T_DOTDOT); return DOTDOT;}
 ";" {SETLVAL(T_SEMI); return SEMI;}
-{FALSE} {int val = 0; yylval.t = newNode("FALSE", curLineNum, (void*)&val); return FALSE;}
-{MAXINT} {int val = 2147483647; yylval.t = newNode("MAXINT", curLineNum, (void*)&val); return MAXINT;}
-{TRUE} {int val = 1; yylval.t = newNode("TRUE", curLineNum, (void*)&val); return TRUE;}
+{LABEL} {SETLVAL(T_LABEL); return LABEL;}
+{FALSE} {int val = 0; yylval.t = newNode("FALSE", curLineNum, (void*)&val, 0); return FALSE;}
+{MAXINT} {int val = 2147483647; yylval.t = newNode("MAXINT", curLineNum, (void*)&val, 0); return MAXINT;}
+{TRUE} {int val = 1; yylval.t = newNode("TRUE", curLineNum, (void*)&val, 0); return TRUE;}
 {ABS} {SETLVAL(T_ABS); return ABS;}
 {CHR} {SETLVAL(T_CHR); return CHR;}
 {ODD} {SETLVAL(T_ODD); return ODD;}
@@ -108,23 +110,17 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 {REAL_TYPE} {SETLVAL(T_REAL); return REAL;}
 {READ} {SETLVAL(T_READ); return READ;}
 {REAL} {
-    char *p;
-    for (p = yytext; *p && *p != '.'; ++p);
-    *p = '\0';
-    double integer_part = atoi(yytext);
-    ++p;
-    double decimal_part = atoi(p) / pow(10, strlen(p));
-    double val = integer_part + decimal_part;
-    yylval.t = newNode("REAL", curLineNum, (void*)&val);
+    double vald = atof(yytext);
+    yylval.t = newNode("REAL", curLineNum, (void*)&vald, 1);
     return REAL;
 }
 {INTEGER} {
     int val = atoi(yytext);
-    yylval.t = newNode("INTEGER", curLineNum, (void*)&val);
+    yylval.t = newNode("INTEGER", curLineNum, (void*)&val, 0);
     return INTEGER;
 }
 {CHAR} {
-    yylval.t = newNode("CHAR", curLineNum, (void*)&yytext[1]);
+    yylval.t = newNode("CHAR", curLineNum, (void*)&yytext[1], 2);
     return CHAR;
 }
 {AND} {SETLVAL(T_AND); return AND;}
@@ -154,7 +150,7 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 {UNTIL} {SETLVAL(T_UNTIL); return UNTIL;}
 {VAR} {SETLVAL(T_VAR); return VAR;}
 {WHILE} {SETLVAL(T_WHILE); return WHILE;}
-{ID} {SETLVAL(T_ID); return ID;}
+{ID} {yylval.t = newNode(yytext, curLineNum, NULL, 0); return ID;}
 <<EOF>> {return -1;}
 . {lex_error("Unrecognized character", curLineNum);}
 

@@ -70,7 +70,8 @@ typedef enum
     T_UNTIL,
     T_VAR,
     T_WHILE,
-    T_ID
+    T_ID,
+    T_LABEL
 } TokenType;
 
 const char *token_names[] = {
@@ -142,7 +143,7 @@ const char *token_names[] = {
     "VAR",
     "WHILE",
     "ID",
-};
+    "LABEL"};
 
 void print_token(int token)
 {

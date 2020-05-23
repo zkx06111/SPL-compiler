@@ -10,6 +10,7 @@ struct TreeNode
     int lineNumber;
     struct TreeNode *child;
     struct TreeNode *sibling;
+    struct TreeNode *rchild; // rightmost child
     union {
         char valc;
         int vali;
@@ -19,7 +20,7 @@ struct TreeNode
 
 typedef struct TreeNode *pTNode;
 
-pTNode newNode(const char *type, int lineNumber, const void *val)
+pTNode newNode(const char *type, int lineNumber, const void *val, int vtype)
 {
     pTNode p = (pTNode)malloc(sizeof(struct TreeNode));
     strcpy(p->type, type);
@@ -28,15 +29,15 @@ pTNode newNode(const char *type, int lineNumber, const void *val)
     {
         p->vali = 0;
     }
-    else if (sizeof(val) == sizeof(char))
+    else if (vtype == 0)
     {
         p->valc = *(char *)val;
     }
-    else if (sizeof(val) == sizeof(int))
+    else if (vtype == 2)
     {
         p->vali = *(int *)val;
     }
-    else if (sizeof(val) == sizeof(double))
+    else if (vtype == 1)
     {
         p->valf = *(double *)val;
     }
@@ -51,6 +52,21 @@ void addLeftChild(pTNode par, pTNode ch)
         par->lineNumber = ch->lineNumber;
     }
     ch->sibling = par->child;
+    if (par->child == NULL)
+    {
+        par->rchild = ch;
+    }
     par->child = ch;
+}
+
+void addRightChild(pTNode par, pTNode ch)
+{
+    if (par->child == NULL)
+    {
+        addLeftChild(par, ch);
+        return;
+    }
+    par->rchild->sibling = ch;
+    par->rchild = ch;
 }
 #endif

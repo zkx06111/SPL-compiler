@@ -1,5 +1,5 @@
 frontend: y.tab.c lex.yy.c
-	gcc -o frontend y.tab.c
+	gcc -o frontend y.tab.c -g
 
 y.tab.c:
 	yacc -vdty parser.y
