@@ -3,3 +3,8 @@ tmp
 process.cpp
 a.out.dSYM
 .DS_Store
+build
+*.exe
+y.tab.h
+y.tab.c
+lex.yy.c
