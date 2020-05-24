@@ -41,6 +41,8 @@ void dfs(pTNode cur, pTNode par, int faid) {
 }
 %token <t> LP RP LB RB DOT COMMA COLON MUL DIV UNEQUAL NOT PLUS MINUS GE GT LE LT EQUAL ASSIGN MOD DOTDOT SEMI FALSE MAXINT TRUE ABS CHR ODD PRED SQRT SUCC WRITE WRITELN BOOLEAN_TYPE CHAR_TYPE INTEGER_TYPE REAL_TYPE READ INTEGER REAL CHAR AND ARRAY BEG CASE CONST DO DOWNTO ELSE END FOR FUNCTION GOTO IF OF OR PACKED PROCEDURE PROGRAM RECORD REPEAT THEN TO TYPE UNTIL VAR WHILE ID SQR ORD LABEL
 %type <t> program program_head routine sub_routine routine_head label_part const_part const_expr_list const_value type_part type_decl_list type_definition type_decl simple_type_decl sys_type array_type_decl record_type_decl field_decl_list field_decl name_list var_part var_decl_list var_decl routine_part function_decl function_head procedure_decl procedure_head parameters para_decl_list para_type_list var_para_list val_para_list routine_body compound_stmt stmt_list stmt non_label_stmt assign_stmt proc_stmt if_stmt else_clause repeat_stmt while_stmt for_stmt direction case_stmt case_expr_list case_expr goto_stmt expression_list expression expr term factor args_list sys_proc sys_funct label_list
+%left PLUS MINUS
+%left MUL DIV MOD
 %%
 
 program:
@@ -456,26 +458,17 @@ routine_body:
     }
 ;
 
-compound_stmt: BEG stmt_list END {
-        p = newNode("compound_stmt", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+compound_stmt: BEG {fa[++top] = newNode("stmt_list", MAXLINE, NULL, 0);}stmt_list END {
+        $<t>$ = newNode("compound_stmt", MAXLINE, NULL, 0);
+        addLeftChild($<t>$, fa[top--]);
     }
 ;
 
 stmt_list:
     stmt_list stmt SEMI {
-        p = newNode("stmt_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $2);
     }
 |   /* empty */ {
-        p = newNode("stmt_list", MAXLINE, NULL, 0);
-        $<t>$ = p;
     }
 ;
 
@@ -483,7 +476,6 @@ stmt:
     INTEGER COLON non_label_stmt {
         p = newNode("stmt", MAXLINE, NULL, 0);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
@@ -495,15 +487,15 @@ stmt:
 ;
 
 non_label_stmt:
-    assign_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   proc_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   compound_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   if_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   repeat_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   while_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   for_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   case_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
-|   goto_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+    assign_stmt {$<t>$ = $1;}
+|   proc_stmt {$<t>$ = $1;}
+|   compound_stmt {$<t>$ = $1;}
+|   if_stmt {$<t>$ = $1;}
+|   repeat_stmt {$<t>$ = $1;}
+|   while_stmt {$<t>$ = $1;}
+|   for_stmt {$<t>$ = $1;}
+|   case_stmt {$<t>$ = $1;}
+|   goto_stmt {$<t>$ = $1;}
 ;
 
 assign_stmt:
@@ -541,10 +533,10 @@ proc_stmt:
         addLeftChild(p, $1);
         $<t>$ = p;
     }
-|   ID LP args_list RP {
+|   ID LP {fa[++top] = newNode("args_list", MAXLINE, NULL, 0);}args_list RP {
         p = newNode("proc_stmt", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
@@ -554,12 +546,13 @@ proc_stmt:
         addLeftChild(p, $1);
         $<t>$ = p;
     }
-|   sys_proc LP expression_list RP {
+|   sys_proc LP {fa[++top] = newNode("expression_list", MAXLINE, NULL, 0);}expression_list RP {
         p = newNode("proc_stmt", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
+        
         $<t>$ = p;
     }
 |   READ LP factor RP {
@@ -609,12 +602,10 @@ else_clause:
 ;
 
 repeat_stmt:
-    REPEAT stmt_list UNTIL expression {
+    REPEAT {fa[++top] = newNode("stmt_list", MAXLINE, NULL, 0); } stmt_list UNTIL expression {
         p = newNode("repeat_stmt", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         $<t>$ = p;
     }
 ;
@@ -623,9 +614,7 @@ while_stmt:
     WHILE expression DO stmt {
         p = newNode("while_stmt", MAXLINE, NULL, 0);
         addLeftChild(p, $4);
-        addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
@@ -634,13 +623,10 @@ for_stmt:
     FOR ID ASSIGN expression direction expression DO stmt {
         p = newNode("for_stmt", MAXLINE, NULL, 0);
         addLeftChild(p, $8);
-        addLeftChild(p, $7);
         addLeftChild(p, $6);
         addLeftChild(p, $5);
         addLeftChild(p, $4);
-        addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
@@ -659,45 +645,33 @@ direction:
 ;
 
 case_stmt:
-    CASE expression OF case_expr_list END {
+    CASE expression OF {fa[++top] = newNode("case_expr_list", MAXLINE, NULL, 0); }case_expr_list END {
         p = newNode("case_stmt", MAXLINE, NULL, 0);
-        addLeftChild(p, $5);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
 
 case_expr_list:
     case_expr_list case_expr {
-        p = newNode("case_expr_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $2);
     }
 |   case_expr {
-        p = newNode("case_expr_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $1);
     }
 ;
 
 case_expr:
     const_value COLON stmt SEMI {
         p = newNode("case_expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   ID COLON stmt SEMI {
         p = newNode("case_expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
@@ -707,67 +681,54 @@ goto_stmt:
     GOTO INTEGER {
         p = newNode("goto_stmt", MAXLINE, NULL, 0);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
 
 expression_list:
     expression_list COMMA expression {
-        p = newNode("expression_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $3);
     }
 |   expression {
-        p = newNode("expression_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $1);
     }
 ;
 
 expression: 
     expression GE expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expression GT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expression LE expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expression LT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expression EQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expression UNEQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild($2, $3);
+        addLeftChild($2, $1->child);
         $<t>$ = p;
     }
 |   expr {
@@ -778,126 +739,94 @@ expression:
 ;
 expr:
     expr PLUS term {
-        p = newNode("expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   expr MINUS term {
-        p = newNode("expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   expr OR term {
-        p = newNode("expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   term {
-        p = newNode("expr", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 ;
 
 term:
     term MUL factor {
-        p = newNode("term", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   term DIV factor {
-        p = newNode("term", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   term MOD factor {
-        p = newNode("term", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   term AND factor {
-        p = newNode("term", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($2, $3);
+        addLeftChild($2, $1);
+        $<t>$ = $2;
     }
 |   factor {
-        p = newNode("term", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 ;
 
 factor:
     ID {
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |
-    ID LP args_list RP {
+    ID LP {fa[++top] = newNode("args_list", MAXLINE, NULL,  0);}args_list RP {
         p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   sys_funct {
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
-|   sys_funct LP args_list RP {
+|   sys_funct LP {fa[++top] = newNode("args_list", MAXLINE, NULL, 0);} args_list RP {
         p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   const_value {
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   LP expression RP {
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $2->child;
     }
 |
     NOT factor {
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($1, $2);
+        $<t>$ = $1;
     }
 |   MINUS factor{
-        p = newNode("factor", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild($1, $2);
+        $<t>$ = $1;
     }
 |   ID LB expression RB {
         p = newNode("factor", MAXLINE, NULL, 0);
         addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        addLeftChild(p, $3->child);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
@@ -955,16 +884,10 @@ sys_funct:
 
 args_list:
     args_list COMMA expression {
-        p = newNode("args_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $3);
     }
 |   expression {
-        p = newNode("args_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $1);
     }
 ;
 %%

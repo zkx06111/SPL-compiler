@@ -14,8 +14,9 @@ type
         gender: char;
     end;
 var
-    a, b: integer;
+    a, b, i, j: integer;
     c: student;
+    hoho: array[0..5] of integer;
 function one(x:integer):integer;
 begin
     one := 1;
@@ -28,5 +29,28 @@ begin
     read(a);
     read(b);
     writeln(a + b);
-    writeln('a');
+    7: writeln('a');
+    repeat
+        writeln(a);
+        if a = 1 then begin
+            writeln('o','n','e');
+        end;
+        a := a - 1;
+        case a + 1 of
+            1: writeln(1);
+            2: 3:begin
+                 writeln(1+1, 2+2, 3+3);
+               end;
+            b: begin
+                 writeln(3);
+               end;
+            4: goto 7;
+        end;
+    until a < 0;
+    for i := 1 to a+3 do begin
+        for j := -5 downto -10 do begin
+            writeln(i-j);
+        end;
+    end;
+    writeln(1+2*(3+4/5 mod hoho[6]));
 end.
