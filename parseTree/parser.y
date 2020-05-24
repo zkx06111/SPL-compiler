@@ -101,11 +101,9 @@ label_part:
 label_list:
     label_list COMMA INTEGER {
         addRightChild(fa[top], $3);
-        $<t>$ = fa[top]->child;
     }
 |   INTEGER {
         addRightChild(fa[top], $1);
-        $<t>$ = fa[top]->child;
     }
 ;
 
@@ -121,12 +119,10 @@ const_expr_list:
     const_expr_list ID EQUAL const_value SEMI {
         addRightChild(fa[top], $2);
         addRightChild(fa[top], $4);
-        $<t>$ = fa[top]->child;
     }
 |   ID EQUAL const_value SEMI {
         addRightChild(fa[top], $1);
         addRightChild(fa[top], $3);
-        $<t>$ = fa[top]->child;
     }
 ;
 
@@ -161,11 +157,9 @@ type_part:
 type_decl_list:
     type_decl_list type_definition {
         addRightChild(fa[top], $2);
-        $<t>$ = fa[top]->child;
     }
 |   type_definition {
         addRightChild(fa[top], $1);
-        $<t>$ = fa[top]->child;
     }
 ;
 
