@@ -8,9 +8,14 @@ add_library(sem
     VarTable.cpp
     ConstTable.cpp
     FuncTable.cpp
-    LabelTabke.cpp
+    LabelTable.cpp
+    sem.cpp
 )
 
 target_include_directories(sem
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(sem
+    PUBLIC parse_tree
 )
