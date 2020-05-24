@@ -9,6 +9,7 @@ add_library(sem
     ConstTable.cpp
     FuncTable.cpp
     LabelTable.cpp
+    SemError.cpp
     sem.cpp
 )
 
@@ -17,5 +18,5 @@ target_include_directories(sem
 )
 
 target_link_libraries(sem
-    PUBLIC parse_tree
+    PUBLIC parser
 )

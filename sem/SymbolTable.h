@@ -59,9 +59,11 @@ class SymbolTable {
     void NewConst(const std::string &name, const std::string &val);
 
     void NewProc(const std::string &name,
-        const std::vector<std::pair<std::string, Type>> &args);
+        const std::vector<std::pair<std::string, Type>> &args,
+        const std::vector<int> mut_args);
     void NewFunc(const std::string &name, const Type &ret,
-        const std::vector<std::pair<std::string, Type>> &args);
+        const std::vector<std::pair<std::string, Type>> &args,
+        const std::vector<int> mut_args);
 
     void NewLabel(int label);
     void NeedLabel(int label) const;

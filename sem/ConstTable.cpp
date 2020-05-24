@@ -15,7 +15,7 @@ Const::~Const() {
 
 Const::Const(const Const &rhs) {
     type = rhs.type;
-    if (type.type == Type::INT) {
+    if (type.type == Type::INT || type.type == Type::ENUM) {
         val_i = rhs.val_i;
     } else if (type.type == Type::REAL) {
         val_r = rhs.val_r;
@@ -29,7 +29,7 @@ Const::Const(const Const &rhs) {
 }
 Const &Const::operator=(const Const &rhs) {
     type = rhs.type;
-    if (type.type == Type::INT) {
+    if (type.type == Type::INT || type.type == Type::ENUM) {
         val_i = rhs.val_i;
     } else if (type.type == Type::REAL) {
         val_r = rhs.val_r;
@@ -81,7 +81,7 @@ void ConstTable::AddConst(const std::string &name, const std::string &val) {
 void ConstTable::AddConst(const std::string &name, const Type &type,
         const Enum &enm) {
     Const c;
-    c.type == type;
+    c.type = type;
     c.val_i = enm.GetEnumVal(name);
     consts[name] = c;
 }

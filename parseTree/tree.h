@@ -16,12 +16,13 @@ struct TreeNode
         char valc;
         int vali;
         double valf;
+        char *vals;
     };
 };
 
 typedef struct TreeNode *pTNode;
 
-pTNode newNode(const char *type, int lineNumber, const void *val, int vtype)
+inline pTNode newNode(const char *type, int lineNumber, const void *val, int vtype)
 {
     pTNode p = (pTNode)malloc(sizeof(struct TreeNode));
     strcpy(p->type, type);
@@ -43,11 +44,17 @@ pTNode newNode(const char *type, int lineNumber, const void *val, int vtype)
     {
         p->valf = *(double *)val;
     }
+    else if (vtype == 3)
+    {
+        char *s = (char *)val;
+        p->vals = (char *)malloc(sizeof(char) * (strlen(s) + 1));
+        strcpy(p->vals, s);
+    }
     p->child = p->sibling = NULL;
     return p;
 }
 
-void addLeftChild(pTNode par, pTNode ch)
+inline void addLeftChild(pTNode par, pTNode ch)
 {
     if (ch->lineNumber < par->lineNumber)
     {
@@ -61,7 +68,7 @@ void addLeftChild(pTNode par, pTNode ch)
     par->child = ch;
 }
 
-void addRightChild(pTNode par, pTNode ch)
+inline void addRightChild(pTNode par, pTNode ch)
 {
     if (par->child == NULL)
     {
@@ -71,4 +78,8 @@ void addRightChild(pTNode par, pTNode ch)
     par->rchild->sibling = ch;
     par->rchild = ch;
 }
+
+pTNode buildTree();
+void printNode(pTNode p);
+void dfs(pTNode cur, pTNode par, int faid);
 #endif

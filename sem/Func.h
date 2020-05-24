@@ -10,6 +10,7 @@ struct Func {
 
     Type ret;
     std::vector<Type> args;
+    std::vector<int> mut_args;
 };
 
 }
