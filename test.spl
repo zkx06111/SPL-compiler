@@ -7,9 +7,23 @@ const
     real_c = 5.5;
 type
     int = integer;
-    qq = real;
+    qwq = real;
+    arr = array[-5..-3] of boolean;
+    student = record
+        id, age: integer;
+        gender: char;
+    end;
 var
     a, b: integer;
+    c: student;
+function one(x:integer):integer;
+begin
+    one := 1;
+end;
+procedure multwo(var x:integer);
+begin
+    x := x * 2;
+end;
 begin
     read(a);
     read(b);

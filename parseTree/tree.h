@@ -8,6 +8,7 @@ struct TreeNode
 {
     char type[20];
     int lineNumber;
+    int visit;
     struct TreeNode *child;
     struct TreeNode *sibling;
     struct TreeNode *rchild; // rightmost child
@@ -25,6 +26,7 @@ pTNode newNode(const char *type, int lineNumber, const void *val, int vtype)
     pTNode p = (pTNode)malloc(sizeof(struct TreeNode));
     strcpy(p->type, type);
     p->lineNumber = lineNumber;
+    p->visit = 0;
     if (val == NULL)
     {
         p->vali = 0;

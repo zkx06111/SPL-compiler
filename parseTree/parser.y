@@ -5,13 +5,36 @@
 #include "lex.yy.c"
 #define PARSER
 struct TreeNode* p;
-struct TreeNode* fa;
-struct TreeNode* stk[100];
+pTNode fa[233];
+int top=0;
 int idx;
 const int MAXLINE = 2147483647;
 void yyerror(const char* msg) {
     printf("%s\n", msg);
 }
+
+int idx = 0;
+
+void printNode(pTNode p) {
+    if (p == NULL) printf("NULL");
+    else printf("%s %d", p->type, p->lineNumber);
+}
+
+void dfs(pTNode cur, pTNode par, int faid) {
+    printNode(par);
+    printf(" ");
+    int curid = ++idx;
+    printNode(cur);
+    printf("\n");
+    if (cur->visit == 1) {
+        exit(0);
+    }
+    cur->visit=1;
+    for (pTNode t = cur->child; t; t = t->sibling) {
+        dfs(t, cur, curid);
+    }
+}
+
 %}
 %union{
     struct TreeNode* t;
@@ -48,7 +71,7 @@ routine:
 
 sub_routine:
     routine_head routine_body {
-        p = newNode("subroutine", MAXLINE, NULL, 0);
+        p = newNode("sub_routine", MAXLINE, NULL, 0);
         addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
@@ -56,9 +79,9 @@ sub_routine:
 ;
 
 routine_head:
-    label_part const_part type_part var_part routine_part {
+    label_part const_part type_part var_part {fa[++top]=newNode("routine_part", MAXLINE, NULL, 0);}routine_part {
         p = newNode("routine_head", MAXLINE, NULL, 0);
-        addLeftChild(p, $5);
+        addLeftChild(p, fa[top--]);
         addLeftChild(p, $4);
         addLeftChild(p, $3);
         addLeftChild(p, $2);
@@ -68,100 +91,85 @@ routine_head:
 ;
 
 label_part:
-    LABEL {fa = newNode("label_part", MAXLINE, NULL, 0);} label_list SEMI {
-        $<t>$ = fa;
+    LABEL {fa[++top] = newNode("label_part", MAXLINE, NULL, 0);} label_list SEMI {
+        $<t>$ = fa[top--];
     }
 |   /* empty */ { $<t>$ = newNode("label_part", MAXLINE, NULL, 0); }
 ;
 
 label_list:
     label_list COMMA INTEGER {
-        addRightChild(fa, $3);
-        $<t>$ = fa->child;
+        addRightChild(fa[top], $3);
+        $<t>$ = fa[top]->child;
     }
 |   INTEGER {
-        addRightChild(fa, $1);
-        $<t>$ = fa->child;
+        addRightChild(fa[top], $1);
+        $<t>$ = fa[top]->child;
     }
 ;
 
 
 const_part:
-    CONST {fa = newNode("const_part", MAXLINE, NULL, 0);} const_expr_list {
-        $<t>$ = fa;
+    CONST {fa[++top] = newNode("const_part", MAXLINE, NULL, 0);} const_expr_list {
+        $<t>$ = fa[top--];
     }
 |   { $<t>$ = newNode("const_part", MAXLINE, NULL, 0);}
 ;
 
 const_expr_list:
     const_expr_list ID EQUAL const_value SEMI {
-        addRightChild(fa, $2);
-        addRightChild(fa, $4);
-        $<t>$ = fa->child;
+        addRightChild(fa[top], $2);
+        addRightChild(fa[top], $4);
+        $<t>$ = fa[top]->child;
     }
 |   ID EQUAL const_value SEMI {
-        addRightChild(fa, $1);
-        addRightChild(fa, $3);
-        $<t>$ = fa->child;
+        addRightChild(fa[top], $1);
+        addRightChild(fa[top], $3);
+        $<t>$ = fa[top]->child;
     }
 ;
 
 const_value:
     INTEGER {
-        p = newNode("int_const_value", MAXLINE, NULL, 0);
-        p->vali = $1->vali;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   REAL{
-        p = newNode("real_const_value", MAXLINE, NULL, 0);
-        p->valf = $1->valf;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   CHAR{
-        p = newNode("char_const_value", MAXLINE, NULL, 0);
-        p->valc = $1->valc;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   FALSE{
-        p = newNode("bool_const_value", MAXLINE, NULL, 0);
-        p->vali = $1->vali;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   TRUE{
-        p = newNode("bool_const_value", MAXLINE, NULL, 0);
-        p->vali = $1->vali;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   MAXINT{
-        p = newNode("int_const_value", MAXLINE, NULL, 0);
-        p->vali = $1->vali;
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 ;
 
 type_part:
-    TYPE {fa = newNode("type_part", MAXLINE, NULL, 0);} type_decl_list {
-        $<t>$ = fa;
+    TYPE {fa[++top] = newNode("type_part", MAXLINE, NULL, 0);} type_decl_list {
+        $<t>$ = fa[top--];
     }
 |   { $<t>$ = newNode("type_part", MAXLINE, NULL, 0);}
 ;
 
 type_decl_list:
     type_decl_list type_definition {
-        printf("QAQ!");
-        addRightChild(fa, $2);
-        $<t>$ = fa->child;
+        addRightChild(fa[top], $2);
+        $<t>$ = fa[top]->child;
     }
 |   type_definition {
-        addRightChild(fa, $1);
-        $<t>$ = fa->child;
-        printf("FUCK!\n");
+        addRightChild(fa[top], $1);
+        $<t>$ = fa[top]->child;
     }
 ;
 
 type_definition:
     ID EQUAL type_decl SEMI {
-        printf("QWQQQ!\n");
         p = newNode("type_definition", MAXLINE, NULL, 0);
         addLeftChild(p, $3);
         addLeftChild(p, $1);
@@ -171,19 +179,13 @@ type_definition:
 
 type_decl:
     simple_type_decl {
-        p = newNode("type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
    }
 |   array_type_decl {
-        p = newNode("type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 |   record_type_decl {
-        p = newNode("type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        $<t>$ = $1;
     }
 ;
 
@@ -200,9 +202,7 @@ simple_type_decl:
     }
 |   LP name_list RP {
         p = newNode("simple_type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   const_value DOTDOT const_value {
@@ -266,67 +266,54 @@ array_type_decl:
         p = newNode("array_type_decl", MAXLINE, NULL, 0);
         addLeftChild(p, $6);
         addLeftChild(p, $3);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
 
 record_type_decl:
-    RECORD field_decl_list END {
-        p = newNode("record_type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+    RECORD {fa[++top] = newNode("record_type_decl", MAXLINE, NULL, 0); fa[++top] = newNode("name_list", MAXLINE, NULL, 0);} field_decl_list END {
+        --top; // delete namelist fa
+        $<t>$ = fa[top--];
     }
 ;
 
 field_decl_list:
     field_decl_list field_decl {
-        p = newNode("field_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        //exit(0);
+        addRightChild(fa[top - 1], $2);
+        $<t>$ = fa[top - 1]->child;
     }
 |   field_decl {
-        p = newNode("field_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top - 1], $1);
+        $<t>$ = fa[top - 1]->child;
     }
 ;
 
 field_decl:
     name_list COLON type_decl SEMI {
         p = newNode("field_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild(p, fa[top]);
+        fa[top] = newNode("name_list", MAXLINE, NULL, 0);
         $<t>$ = p;
     }
 ;
 
 name_list:
     name_list COMMA ID {
-        p = newNode("name_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $3);
+        $<t>$ = fa[top]->child;
     }
 |   ID {
-        p = newNode("name_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $1);
+        $<t>$ = fa[top]->child;
     }
 ;
 
 var_part:
-    VAR var_decl_list {
-        p = newNode("var_part", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+    VAR {fa[++top]=newNode("var_part", MAXLINE, NULL, 0); fa[++top]=newNode("name_list", MAXLINE, NULL, 0);} var_decl_list {
+        --top;
+        $<t>$ = fa[top--];
     }
 |   /* empty */ {
         p = newNode("var_part", MAXLINE, NULL, 0);
@@ -336,64 +323,46 @@ var_part:
 
 var_decl_list:
     var_decl_list var_decl {
-        p = newNode("var_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top-1], $2);
+        $<t>$ = fa[top-1]->child;
     }
 |   var_decl {
-        p = newNode("var_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top-1], $1);
+        $<t>$ = fa[top-1]->child;
     }
 ;
 
 var_decl:
     name_list COLON type_decl SEMI {
         p = newNode("var_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild(p, fa[top]);
+        fa[top]=newNode("name_list", MAXLINE, NULL, 0);
         $<t>$ = p;
     }
 ;
 
 routine_part:
     routine_part function_decl {
-        p = newNode("routine_part", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top], $2);
     }
 |   routine_part procedure_decl {
-        p = newNode("routine_part", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild(fa[top], $2);
     }
 |   function_decl {
-        p = newNode("routine_part", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild(fa[top], $1);
     }
 |   procedure_decl {
-        p = newNode("routine_part", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addLeftChild(fa[top], $1);
     }
 |   /* empty */ {
-        p = newNode("routine_part", MAXLINE, NULL, 0);
-        $<t>$ = p;
     }
 ;
 
 function_decl:
     function_head SEMI sub_routine SEMI {
         p = newNode("function_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
@@ -403,10 +372,8 @@ function_head:
     FUNCTION ID parameters COLON simple_type_decl {
         p = newNode("function_head", MAXLINE, NULL, 0);
         addLeftChild(p, $5);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
@@ -414,9 +381,7 @@ function_head:
 procedure_decl:
     procedure_head SEMI sub_routine SEMI {
         p = newNode("procedure_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $4);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
@@ -425,18 +390,16 @@ procedure_decl:
 procedure_head:
     PROCEDURE ID parameters {
         p = newNode("procedure_head", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
 
 parameters:
-    LP para_decl_list RP {
+    LP {fa[++top] = newNode("para_decl_list", MAXLINE, NULL, 0);fa[++top] = newNode("name_list", MAXLINE, NULL, 0);} para_decl_list RP {
         p = newNode("parameters", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        --top;
+        addLeftChild(p, fa[top--]);
         $<t>$ = p;
     }
 |   /* empty */ {
@@ -447,16 +410,11 @@ parameters:
 
 para_decl_list:
     para_decl_list SEMI para_type_list {
-        p = newNode("para_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $3);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top-1], $3);
+        fa[top] = newNode("name_list", MAXLINE, NULL, 0);
     }
 |   para_type_list {
-        p = newNode("para_decl_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
-        $<t>$ = p;
+        addRightChild(fa[top-1], $1);
     }
 ;
 
@@ -464,14 +422,12 @@ para_type_list:
     var_para_list COLON simple_type_decl {
         p = newNode("para_type_list", MAXLINE, NULL, 0);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   val_para_list COLON simple_type_decl {
         p = newNode("para_type_list", MAXLINE, NULL, 0);
         addLeftChild(p, $3);
-        addLeftChild(p, $2);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
@@ -479,8 +435,7 @@ para_type_list:
 
 var_para_list: VAR name_list {
         p = newNode("var_para_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        addLeftChild(p, fa[top]);
         $<t>$ = p;
     }
 ;
@@ -488,7 +443,7 @@ var_para_list: VAR name_list {
 val_para_list:
     name_list {
         p = newNode("val_para_list", MAXLINE, NULL, 0);
-        addLeftChild(p, $1);
+        addLeftChild(p, fa[top]);
         $<t>$ = p;
     }
 ;
@@ -540,15 +495,15 @@ stmt:
 ;
 
 non_label_stmt:
-    assign_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   proc_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   compound_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   if_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   repeat_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   while_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   for_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   case_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
-|   goto_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);}
+    assign_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   proc_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   compound_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   if_stmt {$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   repeat_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   while_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   for_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   case_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
+|   goto_stmt{$<t>$ = newNode("non_label_stmt", MAXLINE, NULL, 0);addLeftChild($<t>$, $1);}
 ;
 
 assign_stmt:
@@ -1013,24 +968,6 @@ args_list:
     }
 ;
 %%
-
-int idx = 0;
-
-void printNode(pTNode p) {
-    if (p == NULL) printf("NULL");
-    else printf("%s", p->type);
-}
-
-void dfs(pTNode cur, pTNode par, int faid) {
-    printNode(par); printf(" %d", faid);
-    printf(" ");
-    int curid = ++idx;
-    printNode(cur); printf(" %d", curid);
-    printf("\n");
-    for (pTNode t = cur->child; t; t = t->sibling) {
-        dfs(t, cur, curid);
-    }
-}
 
 pTNode buildTree()
 {
