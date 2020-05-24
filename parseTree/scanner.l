@@ -2,7 +2,7 @@
 %{
 #include <math.h>
 #include <string.h>
-#include "y.tab.h"
+#include "y.tab.hpp"
 #include <stdio.h>
 #include "tree.h"
 #include "token.h"
@@ -91,9 +91,9 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 ".." {SETLVAL(T_DOTDOT); return DOTDOT;}
 ";" {SETLVAL(T_SEMI); return SEMI;}
 {LABEL} {SETLVAL(T_LABEL); return LABEL;}
-{FALSE} {int val = 0; yylval.t = newNode("FALSE", curLineNum, (void*)&val, 0); return FALSE;}
-{MAXINT} {int val = 2147483647; yylval.t = newNode("MAXINT", curLineNum, (void*)&val, 0); return MAXINT;}
-{TRUE} {int val = 1; yylval.t = newNode("TRUE", curLineNum, (void*)&val, 0); return TRUE;}
+{FALSE} {int val = 0; yylval.t = newNode("BOOLEAN", curLineNum, (void*)&val, 0); return FALSE;}
+{MAXINT} {int val = 2147483647; yylval.t = newNode("INTEGER", curLineNum, (void*)&val, 0); return MAXINT;}
+{TRUE} {int val = 1; yylval.t = newNode("BOOLEAN", curLineNum, (void*)&val, 0); return TRUE;}
 {ABS} {SETLVAL(T_ABS); return ABS;}
 {CHR} {SETLVAL(T_CHR); return CHR;}
 {ODD} {SETLVAL(T_ODD); return ODD;}
@@ -107,7 +107,7 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 {BOOLEAN_TYPE} {SETLVAL(T_BOOLEAN_TYPE); return BOOLEAN_TYPE;}
 {CHAR_TYPE} {SETLVAL(T_CHAR_TYPE); return CHAR_TYPE;}
 {INTEGER_TYPE} {SETLVAL(T_INTEGER_TYPE); return INTEGER_TYPE;}
-{REAL_TYPE} {SETLVAL(T_REAL); return REAL_TYPE;}
+{REAL_TYPE} {SETLVAL(T_REAL_TYPE); return REAL_TYPE;}
 {READ} {SETLVAL(T_READ); return READ;}
 {REAL} {
     double vald = atof(yytext);
@@ -150,7 +150,7 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 {UNTIL} {SETLVAL(T_UNTIL); return UNTIL;}
 {VAR} {SETLVAL(T_VAR); return VAR;}
 {WHILE} {SETLVAL(T_WHILE); return WHILE;}
-{ID} {yylval.t = newNode(yytext, curLineNum, NULL, 0); return ID;}
+{ID} {yylval.t = newNode("ID", curLineNum, yytext, 3); return ID;}
 <<EOF>> {return -1;}
 . {lex_error("Unrecognized character", curLineNum);}
 

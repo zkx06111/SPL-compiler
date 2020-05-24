@@ -7,7 +7,6 @@
 struct TreeNode* p;
 pTNode fa[233];
 int top=0;
-int idx;
 const int MAXLINE = 2147483647;
 void yyerror(const char* msg) {
     printf("%s\n", msg);
@@ -200,9 +199,9 @@ simple_type_decl:
         addLeftChild(p, $1);
         $<t>$ = p;
     }
-|   LP name_list RP {
+|   LP { fa[++top] = newNode("name_list", MAXLINE, NULL, 0); } name_list RP {
         p = newNode("simple_type_decl", MAXLINE, NULL, 0);
-        addLeftChild(p, $2);
+        addLeftChild(p, fa[top--]);
         $<t>$ = p;
     }
 |   const_value DOTDOT const_value {
@@ -390,6 +389,7 @@ procedure_decl:
 procedure_head:
     PROCEDURE ID parameters {
         p = newNode("procedure_head", MAXLINE, NULL, 0);
+        addLeftChild(p, $3);
         addLeftChild(p, $2);
         $<t>$ = p;
     }
@@ -411,7 +411,7 @@ parameters:
 para_decl_list:
     para_decl_list SEMI para_type_list {
         addRightChild(fa[top-1], $3);
-        fa[top] = newNode("name_list", MAXLINE, NULL, 0);
+        // fa[top] = newNode("name_list", MAXLINE, NULL, 0);
     }
 |   para_type_list {
         addRightChild(fa[top-1], $1);
@@ -436,6 +436,7 @@ para_type_list:
 var_para_list: VAR name_list {
         p = newNode("var_para_list", MAXLINE, NULL, 0);
         addLeftChild(p, fa[top]);
+        fa[top] = newNode("name_list", MAXLINE, NULL, 0);
         $<t>$ = p;
     }
 ;
@@ -444,6 +445,7 @@ val_para_list:
     name_list {
         p = newNode("val_para_list", MAXLINE, NULL, 0);
         addLeftChild(p, fa[top]);
+        fa[top] = newNode("name_list", MAXLINE, NULL, 0);
         $<t>$ = p;
     }
 ;
@@ -975,8 +977,10 @@ pTNode buildTree()
     return p;
 }
 
+/*
 int main() {
-    freopen("../test.spl", "r", stdin);
+    // freopen("../test.spl", "r", stdin);
     dfs(buildTree(), NULL, 0);
     return 0;
 }
+*/

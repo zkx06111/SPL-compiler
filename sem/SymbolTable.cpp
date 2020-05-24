@@ -213,6 +213,10 @@ Type SymbolTable::NewEnum(const std::vector<std::string> &ids) {
     std::unordered_map<std::string, int> ele;
     int val = 0;
     for (const auto &id : ids) {
+        if (ele.count(id) != 0) {
+            throw SemError(
+                "duplicated identifier '" + id + "' in record definition");
+        }
         ele[id] = val;
         ++val;
     }
@@ -265,6 +269,9 @@ Type SymbolTable::NewEnumSubrange(const std::string &l, const std::string &r) {
     }
     int lv = GetConstValI(l);
     int rv = GetConstValI(r);
+    if (lv > rv) {
+        throw SemError("lower bound is greater than upper bound");
+    }
     Type type = type_t.back().AddSubrange(Subrange(le, lv, rv));
     return type;
 }
@@ -381,8 +388,10 @@ void SymbolTable::NewConst(const std::string &name, const Type &type,
 }
 
 void SymbolTable::NewProc(const std::string &name,
-        const std::vector<std::pair<std::string, Type>> &args) {
+        const std::vector<std::pair<std::string, Type>> &args,
+        const std::vector<int> mut_args) {
     if (CheckId(name)) {
+        NewScope();
         throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
@@ -390,6 +399,7 @@ void SymbolTable::NewProc(const std::string &name,
     std::unordered_set<std::string> names;
     for (const auto &[arg_name, arg_type] : args) {
         if (names.count(arg_name) != 0) {
+            NewScope();
             throw SemError("duplicated identifier '" + arg_name +
                 "' in procedure definition");
         } else {
@@ -397,12 +407,14 @@ void SymbolTable::NewProc(const std::string &name,
         }
 
         if (IsVoid(arg_type)) {
+            NewScope();
             throw SemError("'" + arg_name + "' has an unknown type");
         }
     }
 
     Func func;
     func.ret = Type::Void();
+    func.mut_args = mut_args;
     for (const auto &[_, arg_type] : args) {
         func.args.push_back(arg_type);
     }
@@ -415,18 +427,22 @@ void SymbolTable::NewProc(const std::string &name,
 }
 
 void SymbolTable::NewFunc(const std::string &name, const Type &ret,
-        const std::vector<std::pair<std::string, Type>> &args) {
+        const std::vector<std::pair<std::string, Type>> &args,
+        const std::vector<int> mut_args) {
     if (CheckId(name)) {
+        NewScope();
         throw SemError("duplicated identifier '" + name + "' in this scope");
     }
     id_t.back().Insert(name);
     if (IsVoid(ret)) {
+        NewScope();
         throw SemError("return type of '" + name + "' is an unknown type");
     }
 
     std::unordered_set<std::string> names;
     for (const auto &[arg_name, arg_type] : args) {
         if (names.count(arg_name) != 0 || name == arg_name) {
+            NewScope();
             throw SemError("duplicated identifier '" + arg_name +
                 "' in function definition");
         } else {
@@ -434,12 +450,14 @@ void SymbolTable::NewFunc(const std::string &name, const Type &ret,
         }
 
         if (IsVoid(arg_type)) {
+            NewScope();
             throw SemError("'" + arg_name + "' has an unknown type");
         }
     }
 
     Func func;
     func.ret = ret;
+    func.mut_args = mut_args;
     for (const auto &[_, arg_type] : args) {
         func.args.push_back(arg_type);
     }
