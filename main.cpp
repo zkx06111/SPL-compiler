@@ -12,8 +12,11 @@ int main(int argc, char **argv) {
     freopen(argv[1], "r", stdin);
 
     TreeNode *root = buildTree();
-    dfs(root, NULL, 0);
-    
+    print(root);
+    if(root == nullptr){
+        return -1;
+    }
+    //dfs(root, NULL, 0);
     bool sem_ret = sem::CheckSem(root);
     if (!sem_ret) {
         std::cout << "sem error occurred" << std::endl;

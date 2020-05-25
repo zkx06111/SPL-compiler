@@ -5,6 +5,13 @@ a.out.dSYM
 .DS_Store
 build
 *.exe
-y.tab.h
-y.tab.c
+*y.tab.*
 lex.yy.c
+*CMakeFiles*
+CMakeCache.txt
+*Makefile
+*.cmake
+*.a
+SPL-compiler
+t.spl
+parseTree/makefile

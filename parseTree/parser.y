@@ -9,7 +9,9 @@ pTNode fa[233];
 int top=0;
 const int MAXLINE = 2147483647;
 void yyerror(const char* msg) {
-    printf("%s\n", msg);
+    if(yylval.t) printf("%s at line %d.\n", msg, yylval.t->lineNumber);
+    else printf("%s\n", msg);
+    p = nullptr;
 }
 
 int idx = 0;
@@ -33,7 +35,35 @@ void dfs(pTNode cur, pTNode par, int faid) {
         dfs(t, cur, curid);
     }
 }
-
+void print(pTNode cur, int depth){
+    if(cur == nullptr || cur->lineNumber == MAXLINE) return;
+    for(int i = 0; i < depth; i += 1) printf("-");
+    if(strcmp(cur->type, "ID") == 0) printf("%s(ID)", cur->vals);
+    else if(strcmp(cur->type, "INTEGER") == 0) printf("%d", cur->vali);
+    else if(strcmp(cur->type, "CHAR") == 0) printf("%c(CHAR)", cur->valc);
+    else if(strcmp(cur->type, "REAL") == 0) printf("%lf", cur->valf);
+    else if(strcmp(cur->type, "BOOLEAN") == 0) printf(cur->vali ? "true" : "false");
+    else if(strcmp(cur->type, "LP") == 0) printf("(");
+    else if(strcmp(cur->type, "RP") == 0) printf(")");
+    else if(strcmp(cur->type, "LB") == 0) printf("[");
+    else if(strcmp(cur->type, "RB") == 0) printf("]");
+    else if(strcmp(cur->type, "DOT") == 0) printf(".");
+    else if(strcmp(cur->type, "MUL") == 0) printf("*");
+    else if(strcmp(cur->type, "DIV") == 0) printf("/");
+    else if(strcmp(cur->type, "UNEQUAL") == 0) printf("<>");
+    else if(strcmp(cur->type, "PLUS") == 0) printf("+");
+    else if(strcmp(cur->type, "GE") == 0) printf(">=");
+    else if(strcmp(cur->type, "GT") == 0) printf(">");
+    else if(strcmp(cur->type, "LE") == 0) printf("<=");
+    else if(strcmp(cur->type, "LT") == 0) printf("<");
+    else if(strcmp(cur->type, "ASSIGN") == 0) printf(":=");
+    else if(strcmp(cur->type, "DOTDOT") == 0) printf("..");
+    else printf("%s", cur->type);
+    printf("\n");
+    for (pTNode t = cur->child; t; t = t->sibling) {
+        print(t, depth + 1);
+    }
+}
 %}
 %union{
     struct TreeNode* t;

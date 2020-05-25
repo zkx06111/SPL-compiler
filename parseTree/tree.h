@@ -82,4 +82,5 @@ inline void addRightChild(pTNode par, pTNode ch)
 pTNode buildTree();
 void printNode(pTNode p);
 void dfs(pTNode cur, pTNode par, int faid);
+void print(pTNode cur, int depth = 0);
 #endif
