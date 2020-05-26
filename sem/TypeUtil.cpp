@@ -128,7 +128,7 @@ Type DoNot(const Type &type) {
     if (t.type == Type::INT || t.type == Type::BOOL) {
         return t;
     } else {
-        throw SemError("lhs type and rhs type don't match");
+        throw SemError("type can't do not operation");
     }
 }
 Type DoNeg(const Type &type) {
@@ -136,7 +136,7 @@ Type DoNeg(const Type &type) {
     if (t.type == Type::INT || t.type == Type::REAL) {
         return t;
     } else {
-        throw SemError("lhs type and rhs type don't match");
+        throw SemError("type can't do negtive operation");
     }
 }
 

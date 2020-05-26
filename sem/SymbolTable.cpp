@@ -48,6 +48,10 @@ void SymbolTable::EndScope() {
     label_t.pop_back();
 }
 
+bool SymbolTable::IsGlobal() const {
+    return id_t.size() == 1;
+}
+
 bool SymbolTable::CheckId(const std::string &name) const {
     return id_t.back().Check(name);
 }

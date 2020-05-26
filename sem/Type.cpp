@@ -68,6 +68,27 @@ void Array::TakeSub(const Type &type) const {
     }
 }
 
+int Array::GetSize() const {
+    if (ind_type.type == Type::SUBRANGE) {
+        Subrange rng = sym_t.GetSubrange(ind_type);
+        return rng.r - rng.l + 1;
+    } else if (ind_type.type == Type::ENUM) {
+        Enum enm = sym_t.GetEnum(ind_type);
+        return enm.ele.size();
+    } else {
+        return 2;
+    }
+}
+
+int Array::GetBase() const {
+    if (ind_type.type == Type::SUBRANGE) {
+        Subrange rng = sym_t.GetSubrange(ind_type);
+        return rng.l;
+    } else {
+        return 0;
+    }
+}
+
 Record::Record(const std::vector<std::pair<std::string, Type>> &data) {
     this->data = data;
     int ind = 0;

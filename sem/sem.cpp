@@ -61,7 +61,7 @@ static bool CheckConstPart(const TreeNode *u) {
     return ret;
 }
 
-static Type CheckSimpleTypeDecl(const TreeNode *u) {
+Type CheckSimpleTypeDecl(const TreeNode *u) {
     if (strcmp(u->type, "sys_type") == 0) {
         const TreeNode *v = u->child;
         if (strcmp(v->type, "INTEGER_TYPE") == 0) {
@@ -133,8 +133,6 @@ static Type CheckSimpleTypeDecl(const TreeNode *u) {
     throw SemError("unknown type decleration");
 }
 
-static Type CheckTypeDecl(const TreeNode *u);
-
 static Type CheckArrayTypeDecl(const TreeNode *u) {
     try {
         Type ind_type = CheckSimpleTypeDecl(u->child->child);
@@ -163,7 +161,7 @@ static Type CheckRecordTypeDecl(const TreeNode *u) {
     }
 }
 
-static Type CheckTypeDecl(const TreeNode *u) {
+Type CheckTypeDecl(const TreeNode *u) {
     if (strcmp(u->type, "simple_type_decl") == 0) {
         const TreeNode *v = u->child;
         return CheckSimpleTypeDecl(v);
