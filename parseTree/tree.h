@@ -79,6 +79,17 @@ inline void addRightChild(pTNode par, pTNode ch)
     par->rchild = ch;
 }
 
+inline pTNode getKthChild(const TreeNode *par, int k) {
+    if (k == 1) {
+        return par->child;
+    }
+    pTNode res = par->child;
+    for (int i = 1; i < k; ++i) {
+        res = res->sibling;
+    }
+    return res;
+}
+
 pTNode buildTree();
 void printNode(pTNode p);
 void dfs(pTNode cur, pTNode par, int faid);
