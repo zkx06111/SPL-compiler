@@ -823,9 +823,6 @@ factor:
         addLeftChild(p, $1);
         $<t>$ = p;
     }
-|   sys_funct {
-        $<t>$ = $1;
-    }
 |   sys_funct LP {fa[++top] = newNode("args_list", MAXLINE, NULL, 0);} args_list RP {
         p = newNode("factor", MAXLINE, NULL, 0);
         addLeftChild(p, $5);
