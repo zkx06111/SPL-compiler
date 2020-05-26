@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(LLVM REQUIRED CONFIG)
 
+link_directories(${LLVM_LIB_DIRS})
+link_libraries(LLVM)
+
 message(${LLVM_INCLUDE_DIRS})
 
 add_subdirectory(parseTree)
