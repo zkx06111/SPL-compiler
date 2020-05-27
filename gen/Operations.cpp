@@ -16,6 +16,18 @@ Cast(const sem::Type &dst_ty, const sem::Type &src_ty, llvm::Value *src_val) {
     return src_val;
 }
 
+llvm::Value *GetPointer(llvm::Value *val) {
+    auto *load_inst = llvm::dyn_cast<llvm::LoadInst>(val);
+    if (load_inst) {
+        return load_inst->getPointerOperand();
+    } else {
+        return nullptr;
+    }
+}
+llvm::Value *Deref(llvm::Value *ptr) {
+    return ir_builder.CreateLoad(ptr, "deref");
+}
+
 void Assign(llvm::Value *dst, llvm::Value *src) {
     ir_builder.CreateStore(src, dst);
 }

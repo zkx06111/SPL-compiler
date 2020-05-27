@@ -16,7 +16,10 @@ target_compile_definitions(gen
     PUBLIC ${LLVM_DEFINITIONS}
 )
 
+llvm_map_components_to_libnames(LLVM_LIBS support core irreader)
 
 target_link_libraries(gen
     PUBLIC sem parser ${LLVM_LIBS}
 )
+
+set_property(TARGET gen PROPERTY CXX_STANDARD 17)

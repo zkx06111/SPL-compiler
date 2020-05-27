@@ -4,18 +4,18 @@
 
 #include "gen.h"
 #include "Operations.h"
+#include "ConstContext.h"
 #include "TypeContext.h"
-#include "ValueContext.h"
 #include "FunctionContext.h"
 
 namespace gen {
 
 llvm::Value *DoPred(const sem::Type &ty, llvm::Value *val) {
-    return ir_builder.CreateSub(val, ValueContext::Const(1), "sysfn_pred");
+    return ir_builder.CreateSub(val, ConstContext::Const(1), "sysfn_pred");
 }
 
 llvm::Value *DoSucc(const sem::Type &ty, llvm::Value *val) {
-    return ir_builder.CreateAdd(val, ValueContext::Const(1), "sysfn_succ");
+    return ir_builder.CreateAdd(val, ConstContext::Const(1), "sysfn_succ");
 }
 
 llvm::Value *DoSqr(const sem::Type &ty, llvm::Value *val) {
@@ -55,7 +55,7 @@ llvm::Value *DoOrd(const sem::Type &ty, llvm::Value *val) {
 }
 
 llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val) {
-    return ir_builder.CreateAnd(val, ValueContext::Const(1), "sysfn_odd");
+    return ir_builder.CreateAnd(val, ConstContext::Const(1), "sysfn_odd");
 }
 
 void Write(const std::vector<sem::Type> &arg_types,

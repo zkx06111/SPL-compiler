@@ -9,6 +9,9 @@ namespace gen {
 llvm::Value *
 Cast(const sem::Type &dst_ty, const sem::Type &src_ty, llvm::Value *src_val);
 
+llvm::Value *GetPointer(llvm::Value *val);
+llvm::Value *Deref(llvm::Value *ptr);
+
 void Assign(llvm::Value *dst, llvm::Value *src);
 void Assign(const sem::Type &dst_ty, llvm::Value *dst_val,
     const sem::Type &src_ty, llvm::Value *src_val);

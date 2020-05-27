@@ -12,7 +12,7 @@
 
 namespace sem {
 
-static std::vector<std::string> CheckNameList(const TreeNode *u) {
+std::vector<std::string> CheckNameList(const TreeNode *u) {
     std::vector<std::string> vec;
     for (const TreeNode *v = u->child; v; v = v->sibling) {
         vec.emplace_back(v->vals);

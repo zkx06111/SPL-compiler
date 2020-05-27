@@ -20,3 +20,5 @@ target_include_directories(sem
 target_link_libraries(sem
     PUBLIC parser
 )
+
+set_property(TARGET sem PROPERTY CXX_STANDARD 17)
