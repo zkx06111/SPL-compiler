@@ -40,9 +40,7 @@ Type DoAssign(const Type &dst, const Type &src);
 
 Type DoAbs(const Type &type);
 Type DoChr(const Type &type);
-inline Type DoOdd(const Type &type) {
-    return DoChr(type);
-}
+Type DoOdd(const Type &type);
 Type DoOrd(const Type &type);
 Type DoPred(const Type &type);
 inline Type DoSqr(const Type &type) {

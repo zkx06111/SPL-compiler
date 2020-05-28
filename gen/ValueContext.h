@@ -2,7 +2,7 @@
 
 #include "llvm/IR/Value.h"
 
-#include "Type.h"
+#include "ExValue.h"
 
 namespace gen {
 
@@ -11,10 +11,11 @@ class ValueContext {
     void NewVariable(const std::string &name, const sem::Type &type);
 
     bool HasName(const std::string &name) const;
-    llvm::Value *GetVariable(const std::string &name) const;
+    ExValue GetVariable(const std::string &name) const;
+    void ModifyVariable(const std::string &name, const ExValue &eval);
 
   private:
-    std::unordered_map<std::string, llvm::Value *> values;
+    std::unordered_map<std::string, ExValue> values;
 };
 
 }

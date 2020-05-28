@@ -176,6 +176,14 @@ Type DoChr(const Type &type) {
         throw SemError("can't assign the 1st parameter");
     }
 }
+Type DoOdd(const Type &type) {
+    Type t = RemoveSubrange(type);
+    if (t.type == Type::INT) {
+        return Type::Bool();
+    } else {
+        throw SemError("can't assign the 1st parameter");
+    }
+}
 Type DoOrd(const Type &type) {
     Type t = RemoveSubrange(type);
     if (t.type == Type::INT || t.type == Type::ENUM) {

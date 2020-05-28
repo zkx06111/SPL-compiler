@@ -1,10 +1,12 @@
 add_library(gen
     GeneratorContext.cpp
+    ConstContext.cpp
     FunctionContext.cpp
     Operations.cpp
     SysFunc.cpp
     TypeContext.cpp
     ValueContext.cpp
+    ExValue.cpp
     gen.cpp
 )
 

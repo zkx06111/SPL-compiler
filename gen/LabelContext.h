@@ -9,6 +9,7 @@ namespace gen {
 class LabelContext {
   public:
     void NewLabel(int label);
+    bool HasLabel() const;
     bool HasLabel(int label) const;
     llvm::BasicBlock *GetBlock(int label) const;
 

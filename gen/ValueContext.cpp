@@ -16,15 +16,22 @@ void ValueContext::NewVariable(const std::string &name, const sem::Type &type) {
     } else {
         value = ir_builder.CreateAlloca(ty, nullptr, name);
     }
-    values[name] = value;
+    ExValue eval;
+    eval.addr = value;
+    eval.type = type;
+    values[name] = eval;
 }
 
 bool ValueContext::HasName(const std::string &name) const {
     return values.count(name) != 0;
 }
 
-llvm::Value *ValueContext::GetVariable(const std::string &name) const {
+ExValue ValueContext::GetVariable(const std::string &name) const {
     return values.at(name);
+}
+
+void ValueContext::ModifyVariable(const std::string &name, const ExValue &eval) {
+    values[name] = eval;
 }
 
 }

@@ -10,6 +10,10 @@ void LabelContext::NewLabel(int label) {
     blocks[label] = NewBlock("label_" + std::to_string(label));
 }
 
+bool LabelContext::HasLabel() const {
+    return !blocks.empty();
+}
+
 bool LabelContext::HasLabel(int label) const {
     return blocks.count(label) != 0;
 }

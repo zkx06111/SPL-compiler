@@ -47,7 +47,7 @@ llvm::Value *DoAbs(const sem::Type &ty, llvm::Value *val) {
 }
 
 llvm::Value *DoChr(const sem::Type &ty, llvm::Value *val) {
-    return Cast(sem::Type::Char(), ty, val);
+    return Cast(sem::Type::Char(), sem::Type::Int(), val);
 }
 
 llvm::Value *DoOrd(const sem::Type &ty, llvm::Value *val) {
@@ -55,7 +55,8 @@ llvm::Value *DoOrd(const sem::Type &ty, llvm::Value *val) {
 }
 
 llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val) {
-    return ir_builder.CreateAnd(val, ConstContext::Const(1), "sysfn_odd");
+    return Cast(sem::Type::Bool(), sem::Type::Int(),
+        ir_builder.CreateAnd(val, ConstContext::Const(1), "sysfn_odd"));
 }
 
 void Write(const std::vector<sem::Type> &arg_types,

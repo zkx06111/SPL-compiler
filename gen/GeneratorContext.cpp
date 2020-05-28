@@ -37,14 +37,35 @@ GeneratorContext::NewVariable(const std::string &name, const sem::Type &type) {
     val_c.back().NewVariable(name, type);
 }
 
-llvm::Value *GeneratorContext::GetVariable(const std::string &name) const {
+bool GeneratorContext::HasVariable(const std::string &name) const {
+    for (auto it = val_c.rbegin(); it != val_c.rend(); it++) {
+        if (it->HasName(name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ExValue GeneratorContext::GetVariable(const std::string &name) const {
     for (auto it = val_c.rbegin(); it != val_c.rend(); it++) {
         if (it->HasName(name)) {
             return it->GetVariable(name);
         }
     }
-    return nullptr;
+    return ExValue {};
 }
+
+/*
+void
+GeneratorContext::ModifyVariable(const std::string &name, const ExValue &eval) {
+    for (auto it = val_c.rbegin(); it != val_c.rend(); it++) {
+        if (it->HasName(name)) {
+            it->ModifyVariable(name, eval);
+            return;
+        }
+    }
+}
+*/
 
 void GeneratorContext::NewConstant(const std::string &name, int val) {
     const_c.back().NewConstant(name, val);
@@ -59,13 +80,22 @@ void GeneratorContext::NewConstant(const std::string &name, char val) {
     const_c.back().NewConstant(name, val);
 }
 
-llvm::Constant *GeneratorContext::GetConst(const std::string &name) const {
+bool GeneratorContext::HasConst(const std::string &name) const {
+    for (auto it = const_c.rbegin(); it != const_c.rend(); it++) {
+        if (it->HasName(name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+ExValue GeneratorContext::GetConst(const std::string &name) const {
     for (auto it = const_c.rbegin(); it != const_c.rend(); it++) {
         if (it->HasName(name)) {
             return it->GetConst(name);
         }
     }
-    return nullptr;
+    return ExValue {};
 }
 
 void
@@ -100,13 +130,18 @@ void GeneratorContext::NewLabel(int label) {
     label_c.back().NewLabel(label);
 }
 
+/*
+bool GeneratorContext::HasLabel() const {
+    return label_c.back().HasLabel();
+}
+*/
+
 llvm::BasicBlock *GeneratorContext::GetBlock(int label) const {
-    for (auto it = label_c.rbegin(); it != label_c.rend(); it++) {
-        if (it->HasLabel(label)) {
-            return it->GetBlock(label);
-        }
+    if (label_c.back().HasLabel(label)) {
+        return label_c.back().GetBlock(label);
+    } else {
+        return nullptr;
     }
-    return nullptr;
 }
 
 }

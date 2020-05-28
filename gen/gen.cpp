@@ -16,17 +16,19 @@ llvm::Module llvm_module("SPL_module", llvm_context);
 llvm::DataLayout llvm_data(&llvm_module);
 llvm::IRBuilder<> ir_builder(llvm_context);
 
-static llvm::Value *GetIDValue(const std::string &name) {
-    llvm::Value *val = gen_c.GetVariable(name);
-    if (val == nullptr) {
-        return gen_c.GetConst(name);
+static ExValue GetIDValue(const std::string &name) {
+    if (gen_c.HasVariable(name)) {
+        return gen_c.GetVariable(name);
     } else {
-        return Deref(val);
+        return gen_c.GetConst(name);
     }
 }
 
 static void GenLabelPart(const TreeNode *u) {
-    // TODO
+    for (const TreeNode *v = u->child; v; v = v->sibling) {
+        int i = v->vali;
+        gen_c.NewLabel(i);
+    }
 }
 
 static void GenConstPart(const TreeNode *u) {
@@ -118,19 +120,19 @@ static void GenRoutineHead(const TreeNode *u) {
     GenRoutinePart(v);
 }
 
-static llvm::Value *GenFactor(const TreeNode *u) {
+static ExValue GenFactor(const TreeNode *u) {
     // TODO
 }
 
-static llvm::Value *GenTerm(const TreeNode *u) {
+static ExValue GenTerm(const TreeNode *u) {
     // TODO
 }
 
-static llvm::Value *GenExpr(const TreeNode *u) {
+static ExValue GenExpr(const TreeNode *u) {
     // TODO
 }
 
-static llvm::Value *GenExpression(const TreeNode *u) {
+static ExValue GenExpression(const TreeNode *u) {
     // TODO
 }
 
@@ -142,37 +144,41 @@ static void GenAssignStmt(const TreeNode *u) {
     std::string name(v->vals);
     v = v->sibling;
     if (strcmp(v->type, "ASSIGN") == 0) {
-        llvm::Value *dst = gen_c.GetVariable(name);
-        llvm::Value *src = GenExpression(v->sibling);
-        Assign(dst, src);
+        ExValue dste = gen_c.GetVariable(name);
+        ExValue srce = GenExpression(v->sibling);
+        Assign(dste, srce);
     } else if (strcmp(v->type, "LB") == 0) {
         v = v->sibling;
-        llvm::Value *ind = GenExpression(v);
-        llvm::Value *src = GenExpression(v->sibling->sibling->sibling);
+        ExValue inde = GenExpression(v);
+        ExValue srce = GenExpression(v->sibling->sibling->sibling);
 
         sem::Type arr_type = sem::sym_t.GetVarType(name);
         sem::Array arr = sem::sym_t.GetArray(arr_type);
         int base = arr.GetBase();
-        llvm::Value *bias =
-            DoSub(sem::Type::Int(), ind, ConstContext::Const(base));
-        llvm::Value *arr_addr = gen_c.GetVariable(name);
-        llvm::Value *dst = ir_builder.CreateGEP(arr_addr,
-            { ConstContext::Const(0), bias });
+        ExValue base_eval;
+        base_eval.type = sem::Type::Int();
+        base_eval.is_const = true;
+        base_eval.val_i = base;
+        ExValue indei = Cast(sem::Type::Int(), inde);
+        ExValue bias = DoSub(indei, base_eval);
+        ExValue arre = gen_c.GetVariable(name);
+        llvm::Value *dst = ir_builder.CreateGEP(arre.addr,
+            { ConstContext::Const(0), bias.Value() });
 
-        Assign(dst, src);
+        Assign(dst, srce.Value());
     } else if (strcmp(v->type, "DOT") == 0) {
         v = v->sibling->sibling;
         std::string member_name(v->vals);
-        llvm::Value *src = GenExpression(v->sibling->sibling);
+        ExValue srce = GenExpression(v->sibling->sibling);
 
         sem::Type rec_type = sem::sym_t.GetVarType(name);
         sem::Record rec = sem::sym_t.GetRecord(rec_type);
         int bias = rec.name2ind[member_name];
-        llvm::Value *rec_addr = gen_c.GetVariable(name);
-        llvm::Value *dst = ir_builder.CreateGEP(rec_addr,
+        ExValue rece = gen_c.GetVariable(name);
+        llvm::Value *dst = ir_builder.CreateGEP(rece.addr,
             { ConstContext::Const(0), ConstContext::Const(bias) });
 
-        Assign(dst, src);
+        Assign(dst, srce.Value());
     }
 }
 
@@ -189,11 +195,22 @@ static void GenProcStmt(const TreeNode *u) {
 
 static void GenIfStmt(const TreeNode *u) {
     const TreeNode *v = u->child;
-    llvm::Value *condition = GenExpression(v);
+    ExValue conde = GenExpression(v);
+
+    if (conde.is_const) {
+        if (conde.val_b) {
+            v = v->sibling;
+            GenStmt(v);
+        } else {
+            v = v->sibling->sibling;
+            GenStmt(v);
+        }
+        return;
+    }
 
     llvm::BasicBlock *if_true = LabelContext::NewBlock("if_true");
     llvm::BasicBlock *if_false = LabelContext::NewBlock("if_false");
-    ir_builder.CreateCondBr(condition, if_true, if_false);
+    ir_builder.CreateCondBr(conde.Value(), if_true, if_false);
 
     v = v->sibling;
     ir_builder.SetInsertPoint(if_true);
@@ -219,8 +236,8 @@ static void GenRepeatStmt(const TreeNode *u) {
     for (const TreeNode *w = v->child; w; w = w->sibling) {
         GenStmt(w);
     }
-    llvm::Value *condition = GenExpression(v->sibling);
-    ir_builder.CreateCondBr(condition, after_repeat, loop);
+    ExValue conde = GenExpression(v->sibling);
+    ir_builder.CreateCondBr(conde.Value(), after_repeat, loop);
 
     ir_builder.SetInsertPoint(after_repeat);
 }
@@ -237,26 +254,24 @@ static void GenWhileStmt(const TreeNode *u) {
     ir_builder.SetInsertPoint(loop);
     GenStmt(v->sibling);
     ir_builder.SetInsertPoint(cond);
-    llvm::Value *condition = GenExpression(v);
-    ir_builder.CreateCondBr(condition, loop, after_while);
+    ExValue conde = GenExpression(v);
+    ir_builder.CreateCondBr(conde.Value(), loop, after_while);
 
     ir_builder.SetInsertPoint(after_while);
 }
 
-// TODO - enum for (need 'get expression type')
 static void GenForStmt(const TreeNode *u) {
     gen_c.NewScope();
     sem::sym_t.NewScope();
 
     const TreeNode *v = u->child;
     std::string name(v->vals);
-    gen_c.NewVariable(name, sem::Type::Int()); // TODO - type
-    sem::sym_t.NewVariable(name, sem::Type::Int());
-    llvm::Value *loop_var = gen_c.GetVariable(name);
-
     v = v->sibling;
-    llvm::Value *init_val = GenExpression(v);
-    Assign(loop_var, init_val);
+    ExValue inite = GenExpression(v);
+    gen_c.NewVariable(name, inite.type);
+    sem::sym_t.NewVariable(name, inite.type);
+    ExValue loop_var = gen_c.GetVariable(name);
+    Assign(loop_var, inite);
 
     v = v->sibling;
     bool asc = (strcmp(v->child->type, "TO") == 0);
@@ -270,62 +285,69 @@ static void GenForStmt(const TreeNode *u) {
 
     ir_builder.SetInsertPoint(loop);
     llvm::Value *loop_var_val;
+    ExValue loop_var_next;
     if (asc) {
-        loop_var_val = DoSucc(sem::Type::Int(), Deref(loop_var));
+        loop_var_next = DoSucc(loop_var);
     } else {
-        loop_var_val = DoPred(sem::Type::Int(), Deref(loop_var));
+        loop_var_next = DoPred(loop_var);
     }
-    Assign(loop_var, loop_var_val);
+    Assign(loop_var, loop_var_next);
     GenStmt(v->sibling);
 
     ir_builder.SetInsertPoint(cond);
-    llvm::Value *final_value = GenExpression(v);
-    llvm::Value *condition;
+    ExValue finale = GenExpression(v);
+    ExValue conde;
     if (asc) {
-        condition = CmpLessEq(sem::Type::Int(), Deref(loop_var), final_value);
+        conde = CmpLessEq(loop_var, finale);
     } else {
-        condition = CmpGreatEq(sem::Type::Int(), Deref(loop_var), final_value);
+        conde = CmpGreatEq(loop_var, finale);
     }
-    ir_builder.CreateCondBr(condition, loop, after_for);
+    ir_builder.CreateCondBr(conde.Value(), loop, after_for);
 
     gen_c.EndScope();
     sem::sym_t.EndScope();
     ir_builder.SetInsertPoint(after_for);
 }
 
-// TODO - type convert (need 'get expression type')
 static void GenCaseStmt(const TreeNode *u) {
     const TreeNode *v = u->child;
-    llvm::Value *case_val = GenExpression(v);
+    ExValue case_eval = GenExpression(v);
 
     v = v->sibling;
     int n_case = 0;
     llvm::BasicBlock *after_case = LabelContext::NewBlock("after_case");
     for (const TreeNode *w = v->child; w; w = w->sibling) {
         const TreeNode *cond_node = w->child;
-        llvm::Value *cond_val;
+        ExValue case_item_eval;
         if (strcmp(cond_node->type, "ID") == 0) {
-            cond_val = GetIDValue(cond_node->vals);
+            case_item_eval = GetIDValue(cond_node->vals);
         } else if (strcmp(v->type, "INTEGER") == 0) {
             int val = v->vali;
-            cond_val = ConstContext::Const(val);
+            case_item_eval.is_const = true;
+            case_item_eval.val_i = val;
+            case_item_eval.type = sem::Type::Int();
         } else if (strcmp(v->type, "REAL") == 0) {
             double val = v->valf;
-            cond_val = ConstContext::Const(val);
+            case_item_eval.is_const = true;
+            case_item_eval.val_r = val;
+            case_item_eval.type = sem::Type::Real();
         } else if (strcmp(v->type, "CHAR") == 0) {
             char val = v->valc;
-            cond_val = ConstContext::Const(val);
+            case_item_eval.is_const = true;
+            case_item_eval.val_c = val;
+            case_item_eval.type = sem::Type::Char();
         } else if (strcmp(v->type, "BOOLEAN") == 0) {
             bool val = v->vali;
-            cond_val = ConstContext::Const(val);
+            case_item_eval.is_const = true;
+            case_item_eval.val_b = val;
+            case_item_eval.type = sem::Type::Bool();
         }
 
-        // TODO - type
-        llvm::Value *condition = CmpEqual(sem::Type::Int(), case_val, cond_val);
+        ExValue conde = CmpEqual(case_eval, case_item_eval);
         std::string ns = std::to_string(n_case);
         llvm::BasicBlock *bt = LabelContext::NewBlock("case_" + ns + "_true");
         llvm::BasicBlock *bf = LabelContext::NewBlock("case_" + ns + "_false");
-        ir_builder.CreateCondBr(condition, bt, bf);
+        ir_builder.CreateCondBr(conde.Value(), bt, bf);
 
         ir_builder.SetInsertPoint(bt);
         GenStmt(cond_node->sibling);
@@ -341,24 +363,13 @@ static void GenCaseStmt(const TreeNode *u) {
 static void GenGotoStmt(const TreeNode *u) {
     int label = u->child->vali;
     llvm::BasicBlock *block = gen_c.GetBlock(label);
-    if (block == nullptr) {
-        gen_c.NewLabel(label);
-        block = gen_c.GetBlock(label);
-    }
     ir_builder.CreateBr(block);
-    llvm::BasicBlock *after_goto = LabelContext::NewBlock("after_goto");
-    ir_builder.SetInsertPoint(after_goto);
 }
 
 static void GenStmt(const TreeNode *u) {
     if (strcmp(u->child->type, "INTEGER") == 0) {
         int label = u->child->vali;
         llvm::BasicBlock *block = gen_c.GetBlock(label);
-        if (block == nullptr) {
-            gen_c.NewLabel(label);
-            block = gen_c.GetBlock(label);
-        }
-        ir_builder.CreateBr(block);
         ir_builder.SetInsertPoint(block);
         u = u->sibling;
     }

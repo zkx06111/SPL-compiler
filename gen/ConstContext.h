@@ -2,6 +2,8 @@
 
 #include "llvm/IR/Value.h"
 
+#include "ExValue.h"
+
 namespace gen {
 
 class ConstContext {
@@ -12,15 +14,15 @@ class ConstContext {
     void NewConstant(const std::string &name, char val);
 
     bool HasName(const std::string &name) const;
-    llvm::Constant *GetConst(const std::string &name) const;
+    ExValue GetConst(const std::string &name) const;
 
-    static llvm::Constant *Const(int val);
-    static llvm::Constant *Const(double val);
-    static llvm::Constant *Const(char val);
-    static llvm::Constant *Const(bool val);
+    static llvm::Value *Const(int val);
+    static llvm::Value *Const(double val);
+    static llvm::Value *Const(char val);
+    static llvm::Value *Const(bool val);
 
   private:
-    std::unordered_map<std::string, llvm::Constant *> consts;
+    std::unordered_map<std::string, ExValue> consts;
 };
 
 }
