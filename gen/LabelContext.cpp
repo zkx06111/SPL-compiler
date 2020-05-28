@@ -11,11 +11,15 @@ void LabelContext::NewLabel(int label) {
 }
 
 bool LabelContext::HasLabel() const {
-    return !blocks.empty();
+    return !declared.empty();
 }
 
 bool LabelContext::HasLabel(int label) const {
     return blocks.count(label) != 0;
+}
+
+void LabelContext::DeclLabel(int label) {
+    declared.insert(label);
 }
 
 llvm::BasicBlock *LabelContext::GetBlock(int label) const {

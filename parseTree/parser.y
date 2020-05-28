@@ -726,36 +726,42 @@ expression:
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression GT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression LE expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression LT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression EQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression UNEQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expr {

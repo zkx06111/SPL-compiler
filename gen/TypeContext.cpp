@@ -45,6 +45,10 @@ llvm::Type *TypeContext::Bool() {
     return llvm::Type::getInt1Ty(llvm_context);
 }
 
+llvm::Type *TypeContext::CharPtr() {
+    return llvm::Type::getInt8PtrTy(llvm_context);
+}
+
 llvm::Type *TypeContext::Void() {
     return llvm::Type::getVoidTy(llvm_context);
 }

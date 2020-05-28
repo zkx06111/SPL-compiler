@@ -8,6 +8,9 @@
 namespace gen {
 
 llvm::Value *ExValue::Value() const {
+    if (addr != nullptr && !is_const) {
+        return Deref(addr);
+    }
     if (value == nullptr && is_const) {
         if (type.type == sem::Type::INT) {
             value = ConstContext::Const(val_i);
@@ -18,8 +21,6 @@ llvm::Value *ExValue::Value() const {
         } else if (type.type == sem::Type::BOOL) {
             value = ConstContext::Const(val_b);
         }
-    } else if (addr != nullptr) {
-        return Deref(addr);
     }
     return value;
 }
@@ -39,6 +40,8 @@ ExValue Cast(const sem::Type &type, const ExValue &val) {
                 ret.val_i = val.val_c;
             } else if (ty == sem::Type::INT && vty == sem::Type::BOOL) {
                 ret.val_i = val.val_b;
+            } else if (ty == sem::Type::INT && vty == sem::Type::ENUM) {
+                ret.val_i = val.val_i;
             } else if (ty == sem::Type::REAL && vty == sem::Type::INT) {
                 ret.val_r = val.val_i;
             } else if (ty == sem::Type::INT) {
@@ -56,8 +59,7 @@ ExValue Cast(const sem::Type &type, const ExValue &val) {
 }
 
 void Assign(ExValue &dst, const ExValue &src) {
-    /*
-    if (src.is_const && set_const) {
+    if (src.is_const) {
         auto dty = dst.type.type;
         auto sty = src.type.type;
         if (dty == sem::Type::REAL && sty == sem::Type::INT) {
@@ -78,7 +80,6 @@ void Assign(ExValue &dst, const ExValue &src) {
     } else {
         dst.is_const = false;
     }
-    */
 
     Assign(dst.type, dst.addr, src.type, src.Value());
 }

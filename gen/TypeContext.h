@@ -14,6 +14,7 @@ class TypeContext {
     static llvm::Type *Real();
     static llvm::Type *Char();
     static llvm::Type *Bool();
+    static llvm::Type *CharPtr();
     static llvm::Type *Void();
     static llvm::ArrayType *Array(const sem::Array &arr);
     static llvm::StructType *Record(const sem::Record &rec);

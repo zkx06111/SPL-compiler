@@ -2,6 +2,7 @@
 
 #include "llvm/IR/Value.h"
 
+#include "ExValue.h"
 #include "Type.h"
 
 namespace gen {
@@ -15,9 +16,7 @@ llvm::Value *DoChr(const sem::Type &ty, llvm::Value *val);
 llvm::Value *DoOrd(const sem::Type &ty, llvm::Value *val);
 llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val);
 
-void Write(const std::vector<sem::Type> &arg_types,
-    const std::vector<llvm::Value *> &arg_vals, bool newline = false);
-void Read(const std::vector<sem::Type> &arg_types,
-    const std::vector<llvm::Value *> &arg_vals, bool newline = false);
+void Write(const std::vector<ExValue> &params, bool newline = false);
+void Read(const std::vector<ExValue> &params, bool newline = false);
 
 }

@@ -20,6 +20,10 @@ class ConstContext {
     static llvm::Value *Const(double val);
     static llvm::Value *Const(char val);
     static llvm::Value *Const(bool val);
+    static ExValue ConstEVal(int val);
+    static ExValue ConstEVal(double val);
+    static ExValue ConstEVal(char val);
+    static ExValue ConstEVal(bool val);
 
   private:
     std::unordered_map<std::string, ExValue> consts;

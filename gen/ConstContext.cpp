@@ -60,4 +60,33 @@ llvm::Value *ConstContext::Const(bool val) {
     return llvm::ConstantInt::get(TypeContext::Bool(), val, true);
 }
 
+ExValue ConstContext::ConstEVal(int val) {
+    ExValue eval;
+    eval.type = sem::Type::Int();
+    eval.is_const = true;
+    eval.val_i = val;
+    return eval;
+}
+ExValue ConstContext::ConstEVal(double val) {
+    ExValue eval;
+    eval.type = sem::Type::Real();
+    eval.is_const = true;
+    eval.val_r = val;
+    return eval;
+}
+ExValue ConstContext::ConstEVal(char val) {
+    ExValue eval;
+    eval.type = sem::Type::Char();
+    eval.is_const = true;
+    eval.val_c = val;
+    return eval;
+}
+ExValue ConstContext::ConstEVal(bool val) {
+    ExValue eval;
+    eval.type = sem::Type::Bool();
+    eval.is_const = true;
+    eval.val_b = val;
+    return eval;
+}
+
 }

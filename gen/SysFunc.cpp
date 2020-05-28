@@ -59,14 +59,64 @@ llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val) {
         ir_builder.CreateAnd(val, ConstContext::Const(1), "sysfn_odd"));
 }
 
-void Write(const std::vector<sem::Type> &arg_types,
-        const std::vector<llvm::Value *> &arg_vals, bool newline) {
-    // TODO
+void Write(const std::vector<ExValue> &params, bool newline) {
+    static llvm::Function *func_printf = FunctionContext::CFunction("printf",
+        TypeContext::Int(), { TypeContext::CharPtr() });
+    
+    std::vector<llvm::Value *> args = { nullptr };
+    std::string fmt_str;
+    bool fir = true;
+    for (const auto &eval : params) {
+        if (fir) {
+            fir = false;
+        } else {
+            fmt_str += ", ";
+        }
+        auto ty = eval.type.type;
+        if (ty == sem::Type::INT || ty == sem::Type::BOOL) {
+            fmt_str += "%d";
+            args.emplace_back(Cast(sem::Type::Int(), eval).Value());
+        } else if (ty == sem::Type::REAL) {
+            fmt_str += "%f";
+            args.emplace_back(eval.Value());
+        } else if (ty == sem::Type::CHAR) {
+            fmt_str += "%c";
+            args.emplace_back(eval.Value());
+        }
+    }
+    if (newline) {
+        fmt_str += "\n";
+    }
+
+    args[0] = ir_builder.CreateGlobalStringPtr(fmt_str, "printf_fmt_str");
+    ir_builder.CreateCall(func_printf, args, "sysfn_write");
 }
 
-void Read(const std::vector<sem::Type> &arg_types,
-        const std::vector<llvm::Value *> &arg_vals, bool newline) {
-    // TODO
+void Read(const std::vector<ExValue> &params, bool newline) {
+    static llvm::Function *func_scanf = FunctionContext::CFunction("scanf",
+        TypeContext::Int(), { TypeContext::CharPtr() });
+    
+    std::vector<llvm::Value *> args = { nullptr };
+    std::string fmt_str;
+    for (const auto &eval : params) {
+        auto ty = eval.type.type;
+        if (ty == sem::Type::INT || ty == sem::Type::BOOL) {
+            fmt_str += "%d";
+            args.emplace_back(Cast(sem::Type::Int(), eval).Value());
+        } else if (ty == sem::Type::REAL) {
+            fmt_str += "%f";
+            args.emplace_back(eval.Value());
+        } else if (ty == sem::Type::CHAR) {
+            fmt_str += "%c";
+            args.emplace_back(eval.Value());
+        }
+    }
+    if (newline) {
+        fmt_str += "\n";
+    }
+
+    args[0] = ir_builder.CreateGlobalStringPtr(fmt_str, "scanf_fmt_str");
+    ir_builder.CreateCall(func_scanf, args, "sysfn_read");
 }
 
 }
