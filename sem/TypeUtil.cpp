@@ -186,7 +186,7 @@ Type DoOdd(const Type &type) {
 }
 Type DoOrd(const Type &type) {
     Type t = RemoveSubrange(type);
-    if (t.type == Type::INT || t.type == Type::ENUM) {
+    if (t.type == Type::INT || t.type == Type::ENUM || t.type == Type::CHAR) {
         return Type::Int();
     } else {
         throw SemError("can't assign the 1st parameter");

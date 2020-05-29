@@ -10,10 +10,25 @@ var
     arr: array[-5..5] of integer;
     r: student;
     flag: boolean;
+function one(x:integer):integer;
+begin
+    one := 1;
+end;
 begin
     a := 3 * 4 + 5 mod 6.5;
     a := true or false;
     a := true and true and (3 < 5) or (6 >= e);
     flag := true and true and (3 < 5) or (6 >= e);
     flag := true and true and 5;
+    a := one(a);
+    a := one(a, a);
+    a := one(e);
+    a := one;
+    a := abs(a);
+    flag := abs(flag);
+    r := succ(r);
+    r := sqrt(e);
+    a := 'a';
+    a := ord('a');
+    a := ord(chr(ord('a')));
 end.
