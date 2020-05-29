@@ -44,12 +44,10 @@ static ExValue GetIDValue(const std::string &name, bool prop) {
 }
 
 static void GenLabelPart(const TreeNode *u) {
-    LOG("begin label part");
     for (const TreeNode *v = u->child; v; v = v->sibling) {
         int i = v->vali;
         gen_c.NewLabel(i);
     }
-    LOG("begin label part");
 }
 
 static void GenConstPart(const TreeNode *u) {
