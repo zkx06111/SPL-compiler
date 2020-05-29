@@ -301,7 +301,7 @@ static bool CheckRoutineHead(const TreeNode *u) {
 }
 
 void codeError() { // temporary func for debugging
-    std::cerr << "Unexpected branch" << std::endl;
+    // std::cerr << "Unexpected branch" << std::endl;
     exit(-1);
 }
 
@@ -310,7 +310,7 @@ static std::pair<bool, Type> CheckExpression(const TreeNode *u);
 static bool CheckStmt(const TreeNode *u);
 
 static std::pair<bool, Type> CheckArrRec(const TreeNode *u) {
-    std::cerr << "CheckArrRec" << std::endl;
+    // std::cerr << "CheckArrRec" << std::endl;
     Type lvalType = sym_t.GetVarType(u->vals);
     Type lelem;
     bool ret = true;
@@ -372,7 +372,7 @@ static std::pair<bool, Type> CheckArrRec(const TreeNode *u) {
 
 static std::pair<bool, std::vector<Type> >
 CheckExpressionList(const TreeNode *u) {
-    std::cerr << "CheckExpressionList" << std::endl;
+    // std::cerr << "CheckExpressionList" << std::endl;
     bool resb = true;
     std::vector<Type> resv;
     for (TreeNode *p = u->child; p; p = p->sibling) {
@@ -384,8 +384,8 @@ CheckExpressionList(const TreeNode *u) {
 }
 
 static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
-    std::cerr << "CheckFactor" << std::endl;
-    fprintf(stderr, "%s\n", u->type);
+    // std::cerr << "CheckFactor" << std::endl;
+    // fprintf(stderr, "%s\n", u->type);
     if (strcmp(getKthChild(u, 2)->type, "LP") != 0) {
         return CheckArrRec(u->child);
     }
@@ -418,7 +418,7 @@ static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
         } else if (strcmp(funcname, "SUCC") == 0) {
             func = DoSucc;
         }
-        std::cerr << args.second[0].type << std::endl;
+        // std::cerr << args.second[0].type << std::endl;
         try {
             rest = func(args.second[0]);
         } catch (const SemError &e) {
@@ -450,8 +450,8 @@ static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
 }
 
 static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
-    std::cerr << "CheckExpression" << std::endl;
-    fprintf(stderr, "%s\n", u->type);
+    // std::cerr << "CheckExpression" << std::endl;
+    // fprintf(stderr, "%s\n", u->type);
     if (strcmp(u->type, "expression") == 0) {
         return CheckExpression(u->child);
     }
@@ -560,7 +560,7 @@ static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
 }
 
 static bool CheckAssignStmt(const TreeNode *u) {
-    std::cerr << "CheckAssignStmt" << std::endl;
+    // std::cerr << "CheckAssignStmt" << std::endl;
     char *secondSonType = getKthChild(u, 2)->type;
     Type lvalType;
     Type lelem;
@@ -608,7 +608,7 @@ static bool CheckProcStmt(const TreeNode *u) {
 }
 
 static bool CheckCompoundStmt(const TreeNode *u) {
-    std::cerr <<  "CheckCompoundStmt" << std::endl;
+    // std::cerr <<  "CheckCompoundStmt" << std::endl;
     bool ret = true;
     for (TreeNode *p = u->child->child; p; p = p->sibling) {
         ret = CheckStmt(p) && ret;
@@ -632,12 +632,42 @@ static bool CheckWhileStmt(const TreeNode *u) {
 }
 
 static bool CheckForStmt(const TreeNode *u) {
-    // TODO
-    return true;
+    Type var;
+    bool ret = true, validvar = true;
+    try {
+        var = sym_t.GetVarType(u->child->vals);
+    } catch (const SemError &e) {
+        LOG_ERROR(u, e);
+        validvar = ret = false;
+    }
+    std::pair<bool, Type> lb, rb;
+    lb = CheckExpression(getKthChild(u, 2));
+    rb = CheckExpression(getKthChild(u, 4));
+    ret = ret && lb.first && rb.first;
+    if (lb.first && validvar) {
+        try {
+            DoAssign(var, lb.second);
+        } catch (const SemError &e) {
+            SemError e1("wrong type for first bound of for_stmt, " + std::string(e.what()));
+            LOG_ERROR(u, e1);
+            ret = false;
+        }
+    }
+    if (rb.first && validvar) {
+        try {
+            DoAssign(var, rb.second);
+        }
+        catch (const SemError &e) {
+            SemError e1("wrong type for second bound of for_stmt, " + std::string(e.what()));
+            LOG_ERROR(u, e1);
+            ret = false;
+        }
+    }
+    return ret;
 }
 
 static bool CheckCaseStmt(const TreeNode *u) {
-    // TODO
+    
     return true;
 }
 
@@ -651,7 +681,7 @@ static bool CheckGotoStmt(const TreeNode *u) {
 }
 
 static bool CheckNonLabelStmt(const TreeNode *u) {
-    std::cerr << "CheckNonLabelStmt" << std::endl;
+    // std::cerr << "CheckNonLabelStmt" << std::endl;
     if (strcmp(u->type, "assign_stmt") == 0) {
         return CheckAssignStmt(u);
     } else if (strcmp(u->type, "proc_stmt") == 0) {
@@ -676,7 +706,7 @@ static bool CheckNonLabelStmt(const TreeNode *u) {
 
 static bool CheckStmt(const TreeNode *u)
 {
-    std::cerr << "CheckStmt" << std::endl;
+    // std::cerr << "CheckStmt" << std::endl;
     if (strcmp(u->child->type, "INTEGER") == 0)
     {
         try {
@@ -698,7 +728,7 @@ static bool CheckStmt(const TreeNode *u)
 }
 
 static bool CheckRoutineBody(const TreeNode *u) {
-    std::cerr << "CheckRoutineBody" << std::endl;
+    // std::cerr << "CheckRoutineBody" << std::endl;
     return CheckNonLabelStmt(u->child);
 }
 

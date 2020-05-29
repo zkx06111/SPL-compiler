@@ -1,0 +1,21 @@
+program for_stmt;
+var
+    i: integer;
+    j: char;
+begin
+    for i := 1 to 5.5 do begin
+        writeln;
+    end;
+    for i := 1 to 5 do begin
+        writeln;
+    end;
+    for i := 'a' to 'z' do begin
+        writeln;
+    end;
+    for i := ord('z') downto ord('a') do begin
+        writeln;
+    end;
+    for j := 'a' to 'z' do begin
+        writeln;
+    end;
+end.
