@@ -15,6 +15,7 @@ class SymbolTable {
 
     void NewScope();
     void EndScope();
+    bool IsGlobal() const;
 
     bool CheckId(const std::string &name) const;
     bool CheckType(const std::string &name) const;

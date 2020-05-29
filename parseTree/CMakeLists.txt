@@ -18,9 +18,4 @@ target_include_directories(parser
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# add_executable(frontend
-#     ${CMAKE_CURRENT_BINARY_DIR}/y.tab.c
-# )
-# target_link_libraries(frontend
-#     PUBLIC parse_tree
-# )
+set_property(TARGET parser PROPERTY CXX_STANDARD 11)

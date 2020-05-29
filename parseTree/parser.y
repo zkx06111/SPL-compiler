@@ -607,10 +607,11 @@ sys_proc:
 if_stmt:
     IF expression THEN stmt else_clause {
         p = newNode("if_stmt", MAXLINE, NULL, 0);
+        addLeftChild(p, $5);
         addLeftChild(p, $4);
-        addLeftChild(p, $3);
+        // addLeftChild(p, $3);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        // addLeftChild(p, $1);
         $<t>$ = p;
     }
 ;
@@ -619,7 +620,7 @@ else_clause:
     ELSE stmt {
         p = newNode("else_clause", MAXLINE, NULL, 0);
         addLeftChild(p, $2);
-        addLeftChild(p, $1);
+        // addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   /* empty */ {
@@ -725,36 +726,42 @@ expression:
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression GT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression LE expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression LT expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression EQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expression UNEQUAL expr {
         p = newNode("expression", MAXLINE, NULL, 0);
         addLeftChild($2, $3);
         addLeftChild($2, $1->child);
+        addLeftChild(p, $2);
         $<t>$ = p;
     }
 |   expr {

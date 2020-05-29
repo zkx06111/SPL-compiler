@@ -48,6 +48,10 @@ void SymbolTable::EndScope() {
     label_t.pop_back();
 }
 
+bool SymbolTable::IsGlobal() const {
+    return id_t.size() == 1;
+}
+
 bool SymbolTable::CheckId(const std::string &name) const {
     return id_t.back().Check(name);
 }
@@ -98,12 +102,7 @@ bool SymbolTable::CheckFunc(const std::string &name) const {
 }
 
 bool SymbolTable::CheckLabel(int label) const {
-    for (auto it = label_t.rbegin(); it != label_t.rend(); it++) {
-        if (it->Check(label)) {
-            return true;
-        }
-    }
-    return false;
+    return label_t.back().Check(label);
 }
 
 Type SymbolTable::GetType(const std::string &name) const {

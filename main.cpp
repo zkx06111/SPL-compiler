@@ -2,6 +2,7 @@
 
 #include "tree.h"
 #include "sem.h"
+#include "gen.h"
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -23,6 +24,8 @@ int main(int argc, char **argv) {
     } else {
         std::cout << "no sem error" << std::endl;
     }
+
+    gen::GenCode(root);
 
     return 0;
 }

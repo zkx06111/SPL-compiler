@@ -61,6 +61,8 @@ struct Array {
     Type GetElementType() const;
     bool CanTakeSub(const Type &type) const;
     void TakeSub(const Type &type) const;
+    int GetSize() const;
+    int GetBase() const;
 
     Type ind_type, ele_type;
 };
