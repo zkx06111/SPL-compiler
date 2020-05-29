@@ -1,5 +1,7 @@
 #include "GeneratorContext.h"
 
+#include <iostream>
+
 namespace gen {
 
 GeneratorContext gen_c;
@@ -26,7 +28,6 @@ void GeneratorContext::EndScope() {
     label_c.pop_back();
     type_c.pop_back();
     val_c.pop_back();
-    scope_stk.pop();
 }
 
 bool GeneratorContext::IsGlobal() const {
@@ -34,8 +35,13 @@ bool GeneratorContext::IsGlobal() const {
 }
 
 void
-GeneratorContext::NewVariable(const std::string &name, const sem::Type &type) {
-    val_c.back().NewVariable(name, type);
+GeneratorContext::NewVariable(const std::string &name, const sem::Type &type,
+        bool is_global) {
+    if (is_global) {
+        val_c.front().NewVariable(name, type, true);
+    } else {
+        val_c.back().NewVariable(name, type);
+    }
 }
 
 bool GeneratorContext::HasVariable(const std::string &name) const {
@@ -100,9 +106,30 @@ ExValue GeneratorContext::GetConst(const std::string &name) const {
 void GeneratorContext::NewFunc(const std::string &name, const sem::Type &ret,
         const std::vector<std::pair<std::string, sem::Type>> &args,
         const std::vector<int> mut_args) {
-    func_c.back().NewFunc(name, ret, args, mut_args);
-    FuncSign sign = func_c.back().GetFunction(name);
+    FuncSign sign = func_c.back().GetSign(name, ret, args, mut_args, scope_name);
     scope_stk.push(sign);
+    scope_name += name + "#";
+}
+
+void GeneratorContext::BeginFunc() {
+    FuncSign sign = scope_stk.top();
+    auto func_it = func_c.rbegin();
+    ++func_it;
+    func_it->NewFunc(sign);
+    scope_stk.pop();
+    scope_stk.push(sign);
+}
+
+void GeneratorContext::EndFunc() {
+    FuncSign sign = scope_stk.top();
+    sign.Return();
+    scope_stk.pop();
+    int pos = scope_name.rfind('#', scope_name.size() - 2);
+    if (pos >= 0) {
+        scope_name = scope_name.substr(0, pos);
+    } else {
+        scope_name = "";
+    }
 }
 
 bool GeneratorContext::HasFunction(const std::string &name) const {
@@ -132,6 +159,7 @@ void GeneratorContext::NewType(const std::string &name, const sem::Type &type) {
 }
 
 llvm::Type *GeneratorContext::GetType(const std::string &name) const {
+
     for (auto it = type_c.rbegin(); it != type_c.rend(); it++) {
         if (it->HasName(name)) {
             return it->GetType(name);

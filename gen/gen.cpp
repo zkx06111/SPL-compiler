@@ -1,20 +1,32 @@
 #include "gen.h"
 
+#include <system_error>
+
 #include "llvm/Support/Error.h"
 
 #include "sem.h"
 #include "SymbolTable.h"
-
+#include "TypeUtil.h"
 #include "GeneratorContext.h"
 #include "Operations.h"
 #include "SysFunc.h"
+
+#include <iostream>
+#define LOG(expr) std::cout << expr << std::endl
 
 namespace gen {
 
 llvm::LLVMContext llvm_context;
 llvm::Module llvm_module("SPL_module", llvm_context);
-llvm::DataLayout llvm_data(&llvm_module);
 llvm::IRBuilder<> ir_builder(llvm_context);
+
+static sem::Type GetSimpleType(const sem::Type &type) {
+    sem::Type ret = sem::RemoveSubrange(type);
+    if (ret.type == sem::Type::ENUM) {
+        ret = sem::Type::Int();
+    }
+    return ret;
+}
 
 static ExValue GetIDValue(const std::string &name, bool prop) {
     ExValue ret;
@@ -71,6 +83,7 @@ static void GenVarPart(const TreeNode *u) {
     for (const TreeNode *v = u->child; v; v = v->sibling) {
         auto names = sem::CheckNameList(v->child);
         sem::Type type = sem::CheckTypeDecl(v->child->sibling);
+        type = GetSimpleType(type);
         for (const auto &name : names) {
             gen_c.NewVariable(name, type);
         }
@@ -92,12 +105,26 @@ static void GenFunctionHead(const TreeNode *u, bool is_func) {
     sem::sym_t.NewScope();
 }
 
-static void GenRoutine(const TreeNode *u);
+static void GenRoutinePart(const TreeNode *u);
+static void GenRoutineBody(const TreeNode *u);
 static void GenSubroutine(const TreeNode *u) {
-    GenRoutine(u);
-    FuncSign sign = gen_c.GetCurrentFunction();
-    sign.Return();
-    sem::sym_t.EndScope();
+    auto v = u->child->rchild;
+    GenRoutinePart(v);
+
+    gen_c.BeginFunc();
+    v = u->child->child;
+    GenLabelPart(v);
+    v = v->sibling;
+    GenConstPart(v);
+    v = v->sibling;
+    GenTypePart(v);
+    v = v->sibling;
+    GenVarPart(v);
+
+    v = u->child->sibling;
+    GenRoutineBody(v);
+
+    gen_c.EndFunc();
 }
 
 static void GenFunctionDecl(const TreeNode *u, bool is_func) {
@@ -139,6 +166,7 @@ static ExValue GetArrayElement(const std::string &name, const ExValue &inde) {
     ret.addr = ir_builder.CreateGEP(arre.addr,
         { ConstContext::Const(0), bias.Value() });
     ret.type = arr.GetElementType();
+    ret.type = GetSimpleType(ret.type);
     return ret;
 }
 
@@ -151,6 +179,7 @@ GetRecordMember(const std::string &rec_name, const std::string &mem_name) {
     ret.addr = ir_builder.CreateGEP(rece.addr,
         { ConstContext::Const(0), ConstContext::Const(bias) });
     ret.type = rec.GetDataType(mem_name);
+    ret.type = GetSimpleType(ret.type);
     return ret;
 }
 
@@ -163,14 +192,28 @@ static std::vector<ExValue> GenExpressionList(const TreeNode *u, bool prop) {
 }
 
 static ExValue GenFactor(const TreeNode *u, bool prop) {
-    if (strcmp(u->type, "ID") == 0) {
+    if (strcmp(u->type, "INTEGER") == 0) {
+        ExValue ret = ConstContext::ConstEVal(u->vali);
+        return ret;
+    } else if (strcmp(u->type, "REAL") == 0) {
+        ExValue ret = ConstContext::ConstEVal(u->valf);
+        return ret;
+    } else if (strcmp(u->type, "BOOLEAN") == 0) {
+        ExValue ret = ConstContext::ConstEVal(bool(u->vali));
+        return ret;
+    } else if (strcmp(u->type, "CHAR") == 0) {
+        ExValue ret = ConstContext::ConstEVal(u->valc);
+        return ret;
+    } else if (strcmp(u->type, "ID") == 0) {
         std::string name(u->vals);
         if (gen_c.HasFunction(name)) {
             FuncSign sign = gen_c.GetFunction(name);
-            sign.Call({});
+            ExValue ret = sign.Call({});
+            return ret;
+        } else {
+            ExValue ret = GetIDValue(name, prop);
+            return ret;
         }
-        ExValue ret = GetIDValue(name, prop);
-        return ret;
     } else if (strcmp(u->type, "NOT") == 0) {
         ExValue val = GenFactor(u->child, prop);
         ExValue ret = DoNot(val);
@@ -187,8 +230,7 @@ static ExValue GenFactor(const TreeNode *u, bool prop) {
             if (strcmp(v->type, "LP") == 0) {
                 auto params = GenExpressionList(v->sibling, prop);
                 FuncSign sign = gen_c.GetFunction(name);
-                sign.Call(params);
-                ExValue ret = GetIDValue(name, prop);
+                ExValue ret = sign.Call(params);
                 return ret;
             } else if (strcmp(v->type, "LB") == 0) {
                 ExValue inde = GenExpression(v->sibling->child, prop);
@@ -333,7 +375,7 @@ static void GenAssignStmt(const TreeNode *u, bool prop) {
         ExValue dste = GetArrayElement(name, inde);
         Assign(dste.addr, srce.Value());
     } else if (strcmp(v->type, "DOT") == 0) {
-        v = v->sibling->sibling;
+        v = v->sibling;
         std::string member_name(v->vals);
         ExValue srce = GenExpression(v->sibling->sibling->child, prop);
         ExValue dste = GetRecordMember(name, member_name);
@@ -351,12 +393,13 @@ static void GenProcStmt(const TreeNode *u, bool prop) {
             params = GenExpressionList(v->sibling->sibling, prop);
         }
         sign.Call(params);
-    } else if (strcmp(v->type, "sys_porc") == 0) {
+    } else if (strcmp(v->type, "sys_proc") == 0) {
         auto params = GenExpressionList(v->sibling->sibling, prop);
         bool newline = (strcmp(v->child->type, "WRITELN") == 0);
         Write(params, newline);
     } else if (strcmp(v->type, "READ") == 0) {
-        auto params = GenExpressionList(v->sibling->sibling, prop);
+        // auto params = GenExpressionList(v->sibling->sibling, prop);
+        auto params = { GenFactor(v->sibling->sibling, prop) };
         Read(params);
     }
 }
@@ -380,11 +423,13 @@ static void GenIfStmt(const TreeNode *u, bool prop) {
 
     llvm::BasicBlock *if_true = LabelContext::NewBlock("if_true");
     llvm::BasicBlock *if_false = LabelContext::NewBlock("if_false");
+    llvm::BasicBlock *after_if = LabelContext::NewBlock("after_if");
     ir_builder.CreateCondBr(conde.Value(), if_true, if_false);
 
     v = v->sibling;
     ir_builder.SetInsertPoint(if_true);
     GenStmt(v, prop);
+    ir_builder.CreateBr(after_if);
 
     v = v->sibling->child;
     if (v != nullptr) {
@@ -392,7 +437,6 @@ static void GenIfStmt(const TreeNode *u, bool prop) {
         GenStmt(v, prop);
     }
 
-    llvm::BasicBlock *after_if = LabelContext::NewBlock("after_if");
     ir_builder.SetInsertPoint(after_if);
 }
 
@@ -441,6 +485,8 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     gen_c.NewVariable(name, inite.type);
     ExValue loop_var = gen_c.GetVariable(name);
     Assign(loop_var, inite);
+    loop_var.is_const = false;
+    gen_c.ModifyVariable(name, loop_var);
 
     v = v->sibling;
     bool asc = (strcmp(v->child->type, "TO") == 0);
@@ -453,7 +499,7 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     ir_builder.CreateBr(cond);
 
     ir_builder.SetInsertPoint(loop);
-    llvm::Value *loop_var_val;
+    GenStmt(v->sibling, false);
     ExValue loop_var_next;
     if (asc) {
         loop_var_next = DoSucc(loop_var);
@@ -461,7 +507,8 @@ static void GenForStmt(const TreeNode *u, bool prop) {
         loop_var_next = DoPred(loop_var);
     }
     Assign(loop_var, loop_var_next);
-    GenStmt(v->sibling, false);
+    loop_var.is_const = false;
+    gen_c.ModifyVariable(name, loop_var);
 
     ir_builder.SetInsertPoint(cond);
     ExValue finale = GenExpression(v->child, false);
@@ -492,24 +539,16 @@ static void GenCaseStmt(const TreeNode *u, bool prop) {
             case_item_eval = GetIDValue(cond_node->vals, prop);
         } else if (strcmp(v->type, "INTEGER") == 0) {
             int val = v->vali;
-            case_item_eval.is_const = true;
-            case_item_eval.val_i = val;
-            case_item_eval.type = sem::Type::Int();
+            case_item_eval = ConstContext::ConstEVal(val);
         } else if (strcmp(v->type, "REAL") == 0) {
             double val = v->valf;
-            case_item_eval.is_const = true;
-            case_item_eval.val_r = val;
-            case_item_eval.type = sem::Type::Real();
+            case_item_eval = ConstContext::ConstEVal(val);
         } else if (strcmp(v->type, "CHAR") == 0) {
             char val = v->valc;
-            case_item_eval.is_const = true;
-            case_item_eval.val_c = val;
-            case_item_eval.type = sem::Type::Char();
+            case_item_eval = ConstContext::ConstEVal(val);
         } else if (strcmp(v->type, "BOOLEAN") == 0) {
             bool val = v->vali;
-            case_item_eval.is_const = true;
-            case_item_eval.val_b = val;
-            case_item_eval.type = sem::Type::Bool();
+            case_item_eval = ConstContext::ConstEVal(val);
         }
 
         ExValue conde = CmpEqual(case_eval, case_item_eval);
@@ -536,8 +575,9 @@ static void GenGotoStmt(const TreeNode *u, bool prop) {
 }
 
 static void GenStmt(const TreeNode *u, bool prop) {
-    if (strcmp(u->child->type, "INTEGER") == 0) {
-        int label = u->child->vali;
+    u = u->child;
+    if (strcmp(u->type, "INTEGER") == 0) {
+        int label = u->vali;
         llvm::BasicBlock *block = gen_c.GetBlock(label);
         ir_builder.SetInsertPoint(block);
         gen_c.DeclLabel(label);
@@ -552,7 +592,7 @@ static void GenStmt(const TreeNode *u, bool prop) {
         GenCompoundStmt(u, prop);
     } else if (strcmp(u->type, "if_stmt") == 0) {
         GenIfStmt(u, prop);
-    } else if (strcmp(u->type, "repeat_sttm") == 0) {
+    } else if (strcmp(u->type, "repeat_stmt") == 0) {
         GenRepeatStmt(u, prop);
     } else if (strcmp(u->type, "while_stmt") == 0) {
         GenWhileStmt(u, prop);
@@ -567,7 +607,7 @@ static void GenStmt(const TreeNode *u, bool prop) {
 
 static void GenCompoundStmt(const TreeNode *u, bool prop) {
     for (const TreeNode *v = u->child->child; v; v = v->sibling) {
-        prop = prop && gen_c.HasLabel();
+        prop = prop && !gen_c.HasLabel();
         GenStmt(v, prop);
     }
 }
@@ -578,25 +618,19 @@ static void GenRoutineBody(const TreeNode *u) {
 
 static void GenRoutine(const TreeNode *u) {
     GenRoutineHead(u->child);
+    FunctionContext::MainFunction();
     GenRoutineBody(u->child->sibling);
 }
 
-void GenCode(const TreeNode *u) {
+void GenCode(const TreeNode *u, const std::string &file_name) {
     sem::sym_t = sem::SymbolTable();
 
-    llvm::FunctionType *func_type =
-        llvm::FunctionType::get(TypeContext::Int(), false);
-    llvm::Function *fn_main = llvm::Function::Create(func_type,
-        llvm::Function::ExternalLinkage, "main", &llvm_module);
-    llvm::BasicBlock *block =
-        llvm::BasicBlock::Create(llvm_context, "main", fn_main);
-    ir_builder.SetInsertPoint(block);
-
-    GenRoutine(u);
+    GenRoutine(u->child);
     ir_builder.CreateRet(ConstContext::Const(0));
 
-    freopen("ir.llvm", "w", stdin);
-    llvm_module.print(llvm::outs(), nullptr);
+    std::error_code EC;
+    llvm::raw_fd_ostream ll_out(file_name + ".ll", EC);
+    llvm_module.print(ll_out, nullptr);
 }
 
 }

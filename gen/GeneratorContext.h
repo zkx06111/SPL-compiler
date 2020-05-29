@@ -18,7 +18,8 @@ class GeneratorContext {
     void EndScope();
     bool IsGlobal() const;
     
-    void NewVariable(const std::string &name, const sem::Type &ty);
+    void NewVariable(const std::string &name, const sem::Type &ty,
+      bool is_global = false);
     bool HasVariable(const std::string &name) const;
     ExValue GetVariable(const std::string &name) const;
     void ModifyVariable(const std::string &name, const ExValue &eval);
@@ -33,6 +34,8 @@ class GeneratorContext {
     void NewFunc(const std::string &name, const sem::Type &ret,
         const std::vector<std::pair<std::string, sem::Type>> &args,
         const std::vector<int> mut_args);
+    void BeginFunc();
+    void EndFunc();
     bool HasFunction(const std::string &name) const;
     FuncSign GetFunction(const std::string &name) const;
     FuncSign GetCurrentFunction() const;
@@ -52,6 +55,7 @@ class GeneratorContext {
     std::vector<TypeContext> type_c;
     std::vector<ValueContext> val_c;
     std::stack<FuncSign> scope_stk;
+    std::string scope_name;
 };
 
 extern GeneratorContext gen_c;

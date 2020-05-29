@@ -51,7 +51,7 @@ llvm::Value *DoChr(const sem::Type &ty, llvm::Value *val) {
 }
 
 llvm::Value *DoOrd(const sem::Type &ty, llvm::Value *val) {
-    return val;
+    return Cast(sem::Type::Int(), ty, val);
 }
 
 llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val) {
@@ -61,7 +61,7 @@ llvm::Value *DoOdd(const sem::Type &ty, llvm::Value *val) {
 
 void Write(const std::vector<ExValue> &params, bool newline) {
     static llvm::Function *func_printf = FunctionContext::CFunction("printf",
-        TypeContext::Int(), { TypeContext::CharPtr() });
+        TypeContext::Int(), { TypeContext::CharPtr() }, true);
     
     std::vector<llvm::Value *> args = { nullptr };
     std::string fmt_str;
@@ -94,21 +94,21 @@ void Write(const std::vector<ExValue> &params, bool newline) {
 
 void Read(const std::vector<ExValue> &params, bool newline) {
     static llvm::Function *func_scanf = FunctionContext::CFunction("scanf",
-        TypeContext::Int(), { TypeContext::CharPtr() });
+        TypeContext::Int(), { TypeContext::CharPtr() }, true);
     
     std::vector<llvm::Value *> args = { nullptr };
     std::string fmt_str;
     for (const auto &eval : params) {
         auto ty = eval.type.type;
-        if (ty == sem::Type::INT || ty == sem::Type::BOOL) {
+        if (ty == sem::Type::INT) {
             fmt_str += "%d";
-            args.emplace_back(Cast(sem::Type::Int(), eval).Value());
+            args.emplace_back(eval.addr);
         } else if (ty == sem::Type::REAL) {
             fmt_str += "%f";
-            args.emplace_back(eval.Value());
+            args.emplace_back(eval.addr);
         } else if (ty == sem::Type::CHAR) {
             fmt_str += "%c";
-            args.emplace_back(eval.Value());
+            args.emplace_back(eval.addr);
         }
     }
     if (newline) {

@@ -7,36 +7,16 @@
 namespace gen {
 
 void ConstContext::NewConstant(const std::string &name, int val) {
-    ExValue eval;
-    eval.is_const = true;
-    eval.type = sem::Type::Int();
-    eval.value = Const(val);
-    eval.val_i = val;
-    consts[name] = eval;
+    consts[name] = ConstEVal(val);
 }
 void ConstContext::NewConstant(const std::string &name, double val) {
-    ExValue eval;
-    eval.is_const = true;
-    eval.type = sem::Type::Real();
-    eval.value = Const(val);
-    eval.val_r = val;
-    consts[name] = eval;
+    consts[name] = ConstEVal(val);
 }
 void ConstContext::NewConstant(const std::string &name, bool val) {
-    ExValue eval;
-    eval.is_const = true;
-    eval.type = sem::Type::Bool();
-    eval.value = Const(val);
-    eval.val_b = val;
-    consts[name] = eval;
+    consts[name] = ConstEVal(val);
 }
 void ConstContext::NewConstant(const std::string &name, char val) {
-    ExValue eval;
-    eval.is_const = true;
-    eval.type = sem::Type::Char();
-    eval.value = Const(val);
-    eval.val_c = val;
-    consts[name] = eval;
+    consts[name] = ConstEVal(val);
 }
 
 bool ConstContext::HasName(const std::string &name) const {

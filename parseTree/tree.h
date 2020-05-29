@@ -32,11 +32,11 @@ inline pTNode newNode(const char *type, int lineNumber, const void *val, int vty
     {
         p->vali = 0;
     }
-    else if (vtype == 0)
+    else if (vtype == 2)
     {
         p->valc = *(char *)val;
     }
-    else if (vtype == 2)
+    else if (vtype == 0)
     {
         p->vali = *(int *)val;
     }

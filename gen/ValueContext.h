@@ -8,7 +8,8 @@ namespace gen {
 
 class ValueContext {
   public:
-    void NewVariable(const std::string &name, const sem::Type &type);
+    void NewVariable(const std::string &name, const sem::Type &type,
+        bool is_global = false);
 
     bool HasName(const std::string &name) const;
     ExValue GetVariable(const std::string &name) const;
