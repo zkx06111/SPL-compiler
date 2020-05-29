@@ -887,27 +887,27 @@ sys_funct:
         $<t>$ = p;
     }
 |   ORD {
-        p = newNode("sys_func", MAXLINE, NULL, 0);
+        p = newNode("sys_funct", MAXLINE, NULL, 0);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   PRED {
-        p = newNode("sys_func", MAXLINE, NULL, 0);
+        p = newNode("sys_funct", MAXLINE, NULL, 0);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   SQR {
-        p = newNode("sys_func", MAXLINE, NULL, 0);
+        p = newNode("sys_funct", MAXLINE, NULL, 0);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   SQRT {
-        p = newNode("sys_func", MAXLINE, NULL, 0);
+        p = newNode("sys_funct", MAXLINE, NULL, 0);
         addLeftChild(p, $1);
         $<t>$ = p;
     }
 |   SUCC {
-        p = newNode("sys_func", MAXLINE, NULL, 0);
+        p = newNode("sys_funct", MAXLINE, NULL, 0);
         addLeftChild(p, $1);
         $<t>$ = p;
     }

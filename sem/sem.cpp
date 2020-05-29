@@ -370,17 +370,89 @@ static std::pair<bool, Type> CheckArrRec(const TreeNode *u) {
     return std::make_pair(ret, lelem);
 }
 
+static std::pair<bool, std::vector<Type> >
+CheckExpressionList(const TreeNode *u) {
+    std::cerr << "CheckExpressionList" << std::endl;
+    bool resb = true;
+    std::vector<Type> resv;
+    for (TreeNode *p = u->child; p; p = p->sibling) {
+        std::pair<bool, Type> t = CheckExpression(p);
+        resb = resb && t.first;
+        resv.push_back(t.second);
+    }
+    return make_pair(resb, resv);
+}
+
 static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
-    std::cerr << "CheckFactor" <<  std::endl;
+    std::cerr << "CheckFactor" << std::endl;
+    fprintf(stderr, "%s\n", u->type);
     if (strcmp(getKthChild(u, 2)->type, "LP") != 0) {
         return CheckArrRec(u->child);
     }
-    return std::make_pair(true, Type::Int());
+    // function call
+    bool res = true;
+    std::pair<bool, std::vector<Type> > args = CheckExpressionList(getKthChild(u, 3));
+    res = args.first;
+    Type rest;
+    if (strcmp(u->child->type, "sys_funct") == 0) {
+        if (args.second.size() != 1) {
+            LOG_ERROR(u, SemError("1 parameter expected, "
+            + std::to_string(args.second.size()) + " parameter(s) found"));
+        }
+        const char* funcname = u->child->child->type;
+        printf("ADS %d %s\n", u->lineNumber, funcname);
+        Type (*func)(const Type &);
+        if (strcmp(funcname, "ABS") == 0) {
+            func = DoAbs;
+        } else if (strcmp(funcname, "CHR") == 0) {
+            func = DoChr;
+        } else if (strcmp(funcname, "ODD") == 0) {
+            func = DoOdd;
+        } else if (strcmp(funcname, "ORD") == 0) {
+            func = DoOrd;
+        } else if (strcmp(funcname, "PRED") == 0) {
+            func = DoPred;
+        } else if (strcmp(funcname, "SQR") == 0) {
+            func = DoSqr;
+        } else if (strcmp(funcname, "SQRT") == 0) {
+            func = DoSqrt;
+        } else if (strcmp(funcname, "SUCC") == 0) {
+            func = DoSucc;
+        }
+        std::cerr << args.second[0].type << std::endl;
+        try {
+            rest = func(args.second[0]);
+        } catch (const SemError &e) {
+            LOG_ERROR(u, e);
+            res = false;
+        }
+    } else {
+        try{
+            if (not sym_t.CheckFunc(u->child->vals)) {
+                std::string msg = "function " + std::string(u->child->vals) + " undefined";
+                throw SemError(msg);
+            }
+        } catch (const SemError &e) {
+            res = false;
+            LOG_ERROR(u, e);
+        }
+        if (sym_t.CheckFunc(u->child->vals)) {
+            Func f = sym_t.GetFunc(u->child->vals);
+            try {
+                f.ApplyArgs(args.second);
+                rest = f.ret;
+            } catch (const SemError &e) {
+                res = false;
+                LOG_ERROR(u, e);
+            }
+        }
+    }
+    return std::make_pair(res, rest);
 }
 
 static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
     std::cerr << "CheckExpression" << std::endl;
-    printf("%s\n", u->type);
+    fprintf(stderr, "%s\n", u->type);
     if (strcmp(u->type, "expression") == 0) {
         return CheckExpression(u->child);
     }
