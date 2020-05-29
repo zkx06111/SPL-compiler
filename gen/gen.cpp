@@ -20,6 +20,8 @@ llvm::LLVMContext llvm_context;
 llvm::Module llvm_module("SPL_module", llvm_context);
 llvm::IRBuilder<> ir_builder(llvm_context);
 
+static std::string src_file_name;
+
 static sem::Type GetSimpleType(const sem::Type &type) {
     sem::Type ret = sem::RemoveSubrange(type);
     if (ret.type == sem::Type::ENUM) {
@@ -43,12 +45,7 @@ static ExValue GetIDValue(const std::string &name, bool prop) {
     return ret;
 }
 
-static void GenLabelPart(const TreeNode *u) {
-    for (const TreeNode *v = u->child; v; v = v->sibling) {
-        int i = v->vali;
-        gen_c.NewLabel(i);
-    }
-}
+static void GenLabelPart(const TreeNode *u) {}
 
 static void GenConstPart(const TreeNode *u) {
     for (const TreeNode *v = u->child; v; v = v->sibling) {
@@ -220,7 +217,7 @@ static ExValue GenFactor(const TreeNode *u, bool prop) {
                 ExValue ret = sign.Call(params);
                 return ret;
             } else if (strcmp(v->type, "LB") == 0) {
-                ExValue inde = GenExpression(v->sibling->child, prop);
+                ExValue inde = GenExpression(v->sibling, prop);
                 ExValue val = GetArrayElement(name, inde);
                 return val;
             } else {
@@ -290,7 +287,7 @@ static ExValue GenExpr(const TreeNode *u, bool prop) {
         ExValue rhs = GenTerm(u->child->sibling, prop);
         ExValue ret = DoAdd(lhs, rhs);
         return ret;
-    } else if (strcmp(u->type, "MINUS") == 0) {
+    } else if (strcmp(u->type, "MINUS") == 0 && u->child->sibling != nullptr) {
         ExValue lhs = GenExpr(u->child, prop);
         ExValue rhs = GenTerm(u->child->sibling, prop);
         ExValue ret = DoSub(lhs, rhs);
@@ -422,6 +419,7 @@ static void GenIfStmt(const TreeNode *u, bool prop) {
     if (v != nullptr) {
         ir_builder.SetInsertPoint(if_false);
         GenStmt(v, prop);
+        ir_builder.CreateBr(after_if);
     }
 
     ir_builder.SetInsertPoint(after_if);
@@ -433,6 +431,7 @@ static void GenRepeatStmt(const TreeNode *u, bool prop) {
     llvm::BasicBlock *loop = LabelContext::NewBlock("loop_repeat");
     llvm::BasicBlock *after_repeat = LabelContext::NewBlock("after_repeat");
 
+    ir_builder.CreateBr(loop);
     ir_builder.SetInsertPoint(loop);
     for (const TreeNode *w = v->child; w; w = w->sibling) {
         GenStmt(w, false);
@@ -454,6 +453,7 @@ static void GenWhileStmt(const TreeNode *u, bool prop) {
 
     ir_builder.SetInsertPoint(loop);
     GenStmt(v->sibling, false);
+    ir_builder.CreateBr(cond);
     ir_builder.SetInsertPoint(cond);
     ExValue conde = GenExpression(v->child, false);
     ir_builder.CreateCondBr(conde.Value(), loop, after_while);
@@ -496,6 +496,7 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     Assign(loop_var, loop_var_next);
     loop_var.is_const = false;
     gen_c.ModifyVariable(name, loop_var);
+    ir_builder.CreateBr(cond);
 
     ir_builder.SetInsertPoint(cond);
     ExValue finale = GenExpression(v->child, false);
@@ -524,32 +525,39 @@ static void GenCaseStmt(const TreeNode *u, bool prop) {
         ExValue case_item_eval;
         if (strcmp(cond_node->type, "ID") == 0) {
             case_item_eval = GetIDValue(cond_node->vals, prop);
-        } else if (strcmp(v->type, "INTEGER") == 0) {
-            int val = v->vali;
+        } else if (strcmp(cond_node->type, "INTEGER") == 0) {
+            int val = cond_node->vali;
             case_item_eval = ConstContext::ConstEVal(val);
-        } else if (strcmp(v->type, "REAL") == 0) {
-            double val = v->valf;
+        } else if (strcmp(cond_node->type, "REAL") == 0) {
+            double val = cond_node->valf;
             case_item_eval = ConstContext::ConstEVal(val);
-        } else if (strcmp(v->type, "CHAR") == 0) {
-            char val = v->valc;
+        } else if (strcmp(cond_node->type, "CHAR") == 0) {
+            char val = cond_node->valc;
             case_item_eval = ConstContext::ConstEVal(val);
-        } else if (strcmp(v->type, "BOOLEAN") == 0) {
-            bool val = v->vali;
+        } else if (strcmp(cond_node->type, "BOOLEAN") == 0) {
+            bool val = cond_node->vali;
             case_item_eval = ConstContext::ConstEVal(val);
         }
 
         ExValue conde = CmpEqual(case_eval, case_item_eval);
         std::string ns = std::to_string(n_case);
         llvm::BasicBlock *bt = LabelContext::NewBlock("case_" + ns + "_true");
-        llvm::BasicBlock *bf = LabelContext::NewBlock("case_" + ns + "_false");
+        llvm::BasicBlock *bf;
+        if (w->sibling == nullptr) {
+            bf = after_case;
+        } else {
+            bf = LabelContext::NewBlock("case_" + ns + "_false");
+        }
         ir_builder.CreateCondBr(conde.Value(), bt, bf);
 
         ir_builder.SetInsertPoint(bt);
         GenStmt(cond_node->sibling, prop);
         ir_builder.CreateBr(after_case);
         
-        ir_builder.SetInsertPoint(bf);
-        ++n_case;
+        if (w->sibling != nullptr) {
+            ir_builder.SetInsertPoint(bf);
+            ++n_case;
+        }
     }
 
     ir_builder.SetInsertPoint(after_case);
@@ -558,7 +566,13 @@ static void GenCaseStmt(const TreeNode *u, bool prop) {
 static void GenGotoStmt(const TreeNode *u, bool prop) {
     int label = u->child->vali;
     llvm::BasicBlock *block = gen_c.GetBlock(label);
+    if (block == nullptr) {
+        gen_c.NewLabel(label);
+        block = gen_c.GetBlock(label);
+    }
     ir_builder.CreateBr(block);
+    llvm::BasicBlock *after = LabelContext::NewBlock("after_goto");
+    ir_builder.SetInsertPoint(after);
 }
 
 static void GenStmt(const TreeNode *u, bool prop) {
@@ -566,6 +580,11 @@ static void GenStmt(const TreeNode *u, bool prop) {
     if (strcmp(u->type, "INTEGER") == 0) {
         int label = u->vali;
         llvm::BasicBlock *block = gen_c.GetBlock(label);
+        if (block == nullptr) {
+            gen_c.NewLabel(label);
+            block = gen_c.GetBlock(label);
+        }
+        ir_builder.CreateBr(block);
         ir_builder.SetInsertPoint(block);
         gen_c.DeclLabel(label);
         prop = false;
@@ -620,6 +639,7 @@ static void GenRoutine(const TreeNode *u) {
 }
 
 void GenCode(const TreeNode *u, const std::string &file_name) {
+    src_file_name = file_name;
     sem::sym_t = sem::SymbolTable();
 
     GenRoutine(u->child);
@@ -628,6 +648,18 @@ void GenCode(const TreeNode *u, const std::string &file_name) {
     std::error_code EC;
     llvm::raw_fd_ostream ll_out(file_name + ".ll", EC);
     llvm_module.print(ll_out, nullptr);
+}
+
+void GenExe(std::string output_name) {
+    if (output_name == "") {
+        int pos = src_file_name.rfind(".");
+        output_name = src_file_name.substr(0, pos);
+    }
+    std::string ll_file_name = src_file_name + ".ll";
+    std::string s_file_name = src_file_name + ".s";
+
+    system(("llc " + ll_file_name).c_str());
+    system(("gcc -o " + output_name + " -lm " + s_file_name).c_str());
 }
 
 }

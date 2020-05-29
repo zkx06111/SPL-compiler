@@ -315,9 +315,21 @@ ExValue DoNot(const ExValue &val) {
     return ret;
 }
 
+static sem::Type GetCmpType(const sem::Type &lhs, const sem::Type &rhs) {
+    if (lhs.type == sem::Type::INT) {
+        if (rhs.type == sem::Type::INT) {
+            return sem::Type::Int();
+        } else {
+            return sem::Type::Real();
+        }
+    }
+    return lhs;
+}
+
 ExValue CmpEqual(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -339,8 +351,8 @@ ExValue CmpEqual(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c == rhs.val_c);
         }
     } else {
-        ret.value = CmpEqual(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpEqual(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }
@@ -348,6 +360,7 @@ ExValue CmpEqual(const ExValue &lhs, const ExValue &rhs) {
 ExValue CmpNEqual(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -369,8 +382,8 @@ ExValue CmpNEqual(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c != rhs.val_c);
         }
     } else {
-        ret.value = CmpNEqual(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpNEqual(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }
@@ -378,6 +391,7 @@ ExValue CmpNEqual(const ExValue &lhs, const ExValue &rhs) {
 ExValue CmpLess(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -399,8 +413,8 @@ ExValue CmpLess(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c < rhs.val_c);
         }
     } else {
-        ret.value = CmpLess(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpLess(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }
@@ -408,6 +422,7 @@ ExValue CmpLess(const ExValue &lhs, const ExValue &rhs) {
 ExValue CmpLessEq(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -429,8 +444,8 @@ ExValue CmpLessEq(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c <= rhs.val_c);
         }
     } else {
-        ret.value = CmpLessEq(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpLessEq(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }
@@ -438,6 +453,7 @@ ExValue CmpLessEq(const ExValue &lhs, const ExValue &rhs) {
 ExValue CmpGreat(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -459,8 +475,8 @@ ExValue CmpGreat(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c > rhs.val_c);
         }
     } else {
-        ret.value = CmpGreat(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpGreat(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }
@@ -468,6 +484,7 @@ ExValue CmpGreat(const ExValue &lhs, const ExValue &rhs) {
 ExValue CmpGreatEq(const ExValue &lhs, const ExValue &rhs) {
     ExValue ret;
     ret.type = sem::Type::Bool();
+    sem::Type mid_ty = GetCmpType(lhs.type, rhs.type);
 
     if (lhs.is_const && rhs.is_const) {
         ret.is_const = true;
@@ -489,8 +506,8 @@ ExValue CmpGreatEq(const ExValue &lhs, const ExValue &rhs) {
             ret.val_b = (lhs.val_c >= rhs.val_c);
         }
     } else {
-        ret.value = CmpGreatEq(ret.type, Cast(ret.type, lhs.type, lhs.Value()),
-            Cast(ret.type, rhs.type, rhs.Value()));
+        ret.value = CmpGreatEq(ret.type, Cast(mid_ty, lhs.type, lhs.Value()),
+            Cast(mid_ty, rhs.type, rhs.Value()));
     }
     return ret;
 }

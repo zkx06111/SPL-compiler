@@ -13,4 +13,6 @@ extern llvm::IRBuilder<> ir_builder;
 
 void GenCode(const TreeNode *u, const std::string &file_name);
 
+void GenExe(std::string output_name = "");
+
 }

@@ -108,7 +108,7 @@ Type DoCmp(const Type &a, const Type &b) {
         if (ta.type == Type::INT || ta.type == Type::REAL ||
                 ta.type == Type::STRING || ta.type == Type::CHAR ||
                 ta.type == Type::ENUM || ta.type == Type::BOOL) {
-            return a;
+            return Type::Bool();
         }
     } else {
         if ((ta.type == Type::INT && tb.type == Type::REAL) ||

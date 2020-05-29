@@ -23,7 +23,7 @@ ExValue FuncSign::Call(const std::vector<ExValue> &params) {
         rete.value = ir_builder.CreateCall(fn, params_val, "call_fn_" + fn_name);
     }
     for (int i : mut_args) {
-        std::string tmp_name = args[i].first + "_@_" + prefix + fn_name;
+        std::string tmp_name = args[i].first + "#" + prefix + fn_name;
         ExValue mut_arg = gen_c.GetVariable(tmp_name);
         ExValue param = params[i];
         Assign(param, mut_arg);
@@ -33,7 +33,7 @@ ExValue FuncSign::Call(const std::vector<ExValue> &params) {
 
 void FuncSign::Return() {
     for (int i : mut_args) {
-        std::string tmp_name = args[i].first + "_@_" + prefix + fn_name;
+        std::string tmp_name = args[i].first + "#" + prefix + fn_name;
         ExValue tmpe = gen_c.GetVariable(tmp_name);
         ExValue arge = gen_c.GetVariable(args[i].first);
         Assign(tmpe, arge);
@@ -60,7 +60,7 @@ FuncSign FunctionContext::GetSign(const std::string &name, const sem::Type &ret,
     sign.mut_args = mut_args;
 
     for (int i : mut_args) {
-        std::string tmp_name = args[i].first + "_@_" + prefix + name;
+        std::string tmp_name = args[i].first + "#" + prefix + name;
         sem::Type tmp_ty = args[i].second;
         gen_c.NewVariable(tmp_name, tmp_ty, true);
     }

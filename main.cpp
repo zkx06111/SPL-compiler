@@ -14,18 +14,19 @@ int main(int argc, char **argv) {
 
     TreeNode *root = buildTree();
     print(root);
-    if(root == nullptr){
+    if (root == nullptr) {
         return -1;
     }
     //dfs(root, NULL, 0);
     bool sem_ret = sem::CheckSem(root);
     if (!sem_ret) {
         std::cout << "sem error occurred" << std::endl;
-    } else {
-        std::cout << "no sem error" << std::endl;
+        return -2;
     }
 
     gen::GenCode(root, argv[1]);
+
+    gen::GenExe();
 
     return 0;
 }

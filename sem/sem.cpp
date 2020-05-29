@@ -208,6 +208,9 @@ static bool CheckVarPart(const TreeNode *u) {
 
 std::pair<std::vector<std::pair<std::string, Type>>, std::vector<int>>
 CheckParametersDecl(const TreeNode *u) {
+    if (u == nullptr) {
+        return { {}, {} };
+    }
     std::vector<std::pair<std::string, Type>> params;
     std::vector<int> mut_params;
     int n_param = 0;
