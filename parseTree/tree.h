@@ -79,7 +79,7 @@ inline void addRightChild(pTNode par, pTNode ch)
     par->rchild = ch;
 }
 
-inline pTNode getKthChild(const TreeNode *par, int k) {
+inline pTNode getKthChild(const struct TreeNode *par, int k) {
     if (k == 1) {
         return par->child;
     }

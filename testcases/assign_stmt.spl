@@ -1,0 +1,24 @@
+program assign;
+type
+    student = record
+        id, age: integer;
+        gender: char;
+    end;
+var
+    a, b: integer;
+    e: real;
+    arr: array[-5..5] of integer;
+    r, s: student;
+begin
+    c := arr['d'];
+    b := e;
+    e := b;
+    e := b.x;
+    a := e.id;
+    a := e.gender;
+    a := r.id;
+    a := r.gender;
+    e := r.gender;
+    a := r.qwq;
+    r := s;
+end.
