@@ -44,10 +44,12 @@ static ExValue GetIDValue(const std::string &name, bool prop) {
 }
 
 static void GenLabelPart(const TreeNode *u) {
+    LOG("begin label part");
     for (const TreeNode *v = u->child; v; v = v->sibling) {
         int i = v->vali;
         gen_c.NewLabel(i);
     }
+    LOG("begin label part");
 }
 
 static void GenConstPart(const TreeNode *u) {
@@ -136,19 +138,6 @@ static void GenRoutinePart(const TreeNode *u) {
     for (const TreeNode *v = u->child; v; v = v->sibling) {
         GenFunctionDecl(v, strcmp(v->type, "function_decl") == 0);
     }
-}
-
-static void GenRoutineHead(const TreeNode *u) {
-    auto v = u->child;
-    GenLabelPart(v);
-    v = v->sibling;
-    GenConstPart(v);
-    v = v->sibling;
-    GenTypePart(v);
-    v = v->sibling;
-    GenVarPart(v);
-    v = v->sibling;
-    GenRoutinePart(v);
 }
 
 static ExValue GenExpression(const TreeNode *u, bool prop);
@@ -617,8 +606,18 @@ static void GenRoutineBody(const TreeNode *u) {
 }
 
 static void GenRoutine(const TreeNode *u) {
-    GenRoutineHead(u->child);
+    auto v = u->child->rchild;
+    GenRoutinePart(v);
     FunctionContext::MainFunction();
+    v = u->child->child;
+    GenLabelPart(v);
+    v = v->sibling;
+    GenConstPart(v);
+    v = v->sibling;
+    GenTypePart(v);
+    v = v->sibling;
+    GenVarPart(v);
+    
     GenRoutineBody(u->child->sibling);
 }
 

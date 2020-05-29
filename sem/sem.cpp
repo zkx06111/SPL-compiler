@@ -593,10 +593,10 @@ static bool CheckNonLabelStmt(const TreeNode *u) {
 static bool CheckStmt(const TreeNode *u)
 {
     std::cerr << "CheckStmt" << std::endl;
-    if (strcmp(u->type, "INTEGER") == 0)
+    if (strcmp(u->child->type, "INTEGER") == 0)
     {
         try {
-            sym_t.NeedLabel(u->vali);
+            sym_t.NeedLabel(u->child->vali);
         } catch (const SemError &e) {
             LOG_ERROR(u, e);
             return false;
