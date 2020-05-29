@@ -400,7 +400,6 @@ static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
             + std::to_string(args.second.size()) + " parameter(s) found"));
         }
         const char* funcname = u->child->child->type;
-        printf("ADS %d %s\n", u->lineNumber, funcname);
         Type (*func)(const Type &);
         if (strcmp(funcname, "ABS") == 0) {
             func = DoAbs;
@@ -464,9 +463,18 @@ static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
         Type rest;
         bool resb = true;
         try {
-            rest = sym_t.GetVarType(u->vals);
-        }
-        catch (const SemError &e) {
+            if (sym_t.CheckFunc(u->vals)) {
+                rest = sym_t.GetFunc(u->vals).ret;
+            } else if (sym_t.CheckVar(u->vals)) {
+                rest = sym_t.GetVarType(u->vals);
+            } else if (sym_t.CheckConst(u->vals)) {
+                rest = sym_t.GetConstType(u->vals);
+            } else if (sym_t.CheckEnum(u->vals)) {
+                rest = sym_t.GetEnumType(u->vals);
+            } else {
+                throw SemError("ID " + std::string(u->vals) + " not defined");
+            }
+        } catch (const SemError &e) {
             LOG_ERROR(u, e);
             resb = false;
         }

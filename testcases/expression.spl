@@ -4,7 +4,9 @@ type
         id, age: integer;
         gender: char;
     end;
+    ENUM = (E_A, E_B, E_C);
 var
+    ea: ENUM;
     a, b: integer;
     e: real;
     arr: array[-5..5] of integer;
@@ -31,4 +33,5 @@ begin
     a := 'a';
     a := ord('a');
     a := ord(chr(ord('a')));
+    ea := E_A;
 end.
