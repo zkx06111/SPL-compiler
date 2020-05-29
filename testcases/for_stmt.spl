@@ -9,6 +9,9 @@ begin
     for i := 1 to 5 do begin
         writeln;
     end;
+    for i := 1 to 5 do begin
+        goto 5;
+    end;
     for i := 'a' to 'z' do begin
         writeln;
     end;
