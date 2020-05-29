@@ -1,0 +1,19 @@
+program expression;
+type
+    student = record
+        id, age: integer;
+        gender: char;
+    end;
+var
+    a, b: integer;
+    e: real;
+    arr: array[-5..5] of integer;
+    r: student;
+    flag: boolean;
+begin
+    a := 3 * 4 + 5 mod 6.5;
+    a := true or false;
+    a := true and true and (3 < 5) or (6 >= e);
+    flag := true and true and (3 < 5) or (6 >= e);
+    flag := true and true and 5;
+end.
