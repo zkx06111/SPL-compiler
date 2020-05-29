@@ -642,8 +642,12 @@ static bool CheckCaseStmt(const TreeNode *u) {
 }
 
 static bool CheckGotoStmt(const TreeNode *u) {
-    // TODO
-    return true;
+    int id = u->child->vali;
+    bool ret = sym_t.CheckLabel(id);
+    if (ret) {
+        LOG_ERROR(u, SemError("label not found"));
+    }
+    return ret;
 }
 
 static bool CheckNonLabelStmt(const TreeNode *u) {
