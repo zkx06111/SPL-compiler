@@ -452,37 +452,34 @@ static std::pair<bool, Type> CheckFactor(const TreeNode *u) {
     return std::make_pair(res, rest);
 }
 
-static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
-    // std::cerr << "CheckExpression" << std::endl;
-    // fprintf(stderr, "%s\n", u->type);
-    if (strcmp(u->type, "expression") == 0) {
-        return CheckExpression(u->child);
-    }
-    const char* op = u->type;
-    if (strcmp(op, "factor") == 0) {
-        return CheckFactor(u);
-    }
-    if (strcmp(u->type, "ID") == 0) {
-        Type rest;
-        bool resb = true;
-        try {
-            if (sym_t.CheckFunc(u->vals)) {
-                rest = sym_t.GetFunc(u->vals).ret;
-            } else if (sym_t.CheckVar(u->vals)) {
-                rest = sym_t.GetVarType(u->vals);
-            } else if (sym_t.CheckConst(u->vals)) {
-                rest = sym_t.GetConstType(u->vals);
-            } else if (sym_t.CheckEnum(u->vals)) {
-                rest = sym_t.GetEnumType(u->vals);
-            } else {
-                throw SemError("ID " + std::string(u->vals) + " not defined");
-            }
-        } catch (const SemError &e) {
-            LOG_ERROR(u, e);
-            resb = false;
+static std::pair<bool, Type> CheckID(const TreeNode *u) {
+    Type rest;
+    bool resb = true;
+    try {
+        if (sym_t.CheckFunc(u->vals)) {
+            rest = sym_t.GetFunc(u->vals).ret;
         }
-        return std::make_pair(resb, rest);
+        else if (sym_t.CheckVar(u->vals)) {
+            rest = sym_t.GetVarType(u->vals);
+        }
+        else if (sym_t.CheckConst(u->vals)) {
+            rest = sym_t.GetConstType(u->vals);
+        }
+        else if (sym_t.CheckEnum(u->vals)) {
+            rest = sym_t.GetEnumType(u->vals);
+        }
+        else {
+            throw SemError("ID " + std::string(u->vals) + " not defined");
+        }
     }
+    catch (const SemError &e) {
+        LOG_ERROR(u, e);
+        resb = false;
+    }
+    return std::make_pair(resb, rest);
+}
+
+static std::pair<bool, Type> CheckConstVal(const TreeNode *u) {
     if (strcmp(u->type, "INTEGER") == 0) {
         return std::make_pair(true, Type::Int());
     }
@@ -495,7 +492,26 @@ static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
     if (strcmp(u->type, "BOOLEAN") == 0) {
         return std::make_pair(true, Type::Bool());
     }
-    
+    return std::make_pair(false, Type::Void());
+}
+
+static std::pair<bool, Type> CheckExpression(const TreeNode *u) {
+    // std::cerr << "CheckExpression" << std::endl;
+    // fprintf(stderr, "%s\n", u->type);
+    if (strcmp(u->type, "expression") == 0) {
+        return CheckExpression(u->child);
+    }
+    const char* op = u->type;
+    if (strcmp(op, "factor") == 0) {
+        return CheckFactor(u);
+    }
+    if (strcmp(u->type, "ID") == 0) {
+        return CheckID(u);
+    }
+    std::pair<bool, Type> cv = CheckConstVal(u);
+    if (cv.first == true) {
+        return cv;
+    }
     if (strcmp(op, "NOT") == 0) {
         std::pair<bool, Type> p = CheckExpression(u->child);
         bool resb;
@@ -672,8 +688,36 @@ static bool CheckForStmt(const TreeNode *u) {
     return ret;
 }
 
+static std::pair<bool, std::vector<Type> > CheckCaseExprList(const TreeNode *u, Type cond) {
+    bool resb;
+    std::vector<Type> resv;
+    for (TreeNode *p = u->child; p; p = p->sibling){
+        std::pair<bool, Type> t;
+        if (strcmp(p->child->type, "ID") == 0) {
+            t = CheckID(p->child);
+        } else {
+            t = CheckConstVal(p->child);
+        }
+        if (not t.first) {
+            resb = false;
+            LOG_ERROR(p, SemError("invalid case value"));
+        } else {
+            resv.push_back(t.second);
+        }
+        try {
+            DoCmp(t.second, cond);
+        } catch (const SemError &e) {
+            SemError e1("invalid case value type, " + std::string(e.what()));
+            LOG_ERROR(p, e1);
+            resb = false;
+        }
+    }
+    return std::make_pair(resb, resv);
+}
+
 static bool CheckCaseStmt(const TreeNode *u) {
-    
+    std::pair<bool, Type> cond = CheckExpression(u->child);
+    std::pair<bool, std::vector<Type> > list = CheckCaseExprList(u->child->sibling, cond.second);
     return true;
 }
 

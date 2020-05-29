@@ -1,0 +1,24 @@
+program for_stmt;
+var
+    i, x: integer;
+    j: char;
+begin
+    case i of
+        1:
+            begin
+                writeln('1');
+            end;
+        'a':
+            begin
+                writeln('2');
+            end;
+        x:
+            begin 
+                writeln('3');
+            end;
+        j:
+            begin
+                writeln('4');
+            end;
+    end;
+end.
