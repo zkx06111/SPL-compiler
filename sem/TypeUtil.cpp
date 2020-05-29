@@ -56,7 +56,7 @@ Type DoAdd(const Type &a, const Type &b) {
     }
     throw SemError("lhs type and rhs type don't match");
 }
-Type CanDoSub(const Type &a, const Type &b) {
+Type DoSub(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
         throw SemError("lhs type and rhs type don't match");
     }
@@ -74,7 +74,7 @@ Type CanDoSub(const Type &a, const Type &b) {
     }
     throw SemError("lhs type and rhs type don't match");
 }
-Type CanDoMod(const Type &a, const Type &b) {
+Type DoMod(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
         throw SemError("lhs type and rhs type don't match");
     }
@@ -86,7 +86,7 @@ Type CanDoMod(const Type &a, const Type &b) {
         throw SemError("lhs type and rhs type don't match");
     }
 }
-Type CanDoAnd(const Type &a, const Type &b) {
+Type DoAnd(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
         throw SemError("lhs type and rhs type don't match");
     }
@@ -98,7 +98,7 @@ Type CanDoAnd(const Type &a, const Type &b) {
         throw SemError("lhs type and rhs type don't match");
     }
 }
-Type CanDoCmp(const Type &a, const Type &b) {
+Type DoCmp(const Type &a, const Type &b) {
     if (a == Type::Void() || b == Type::Void()) {
         throw SemError("lhs type and rhs type don't match");
     }

@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
         std::cout << "no sem error" << std::endl;
     }
 
-    // gen::GenCode(root);
+    gen::GenCode(root);
 
     return 0;
 }

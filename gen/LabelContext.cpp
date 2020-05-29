@@ -28,7 +28,7 @@ llvm::BasicBlock *LabelContext::GetBlock(int label) const {
 
 llvm::BasicBlock *LabelContext::NewBlock(const std::string &name) {
     llvm::Function *func = ir_builder.GetInsertBlock()->getParent();
-    llvm::BaiscBlock *block = llvm::BasicBlock::Create(llvm_context, name, func);
+    llvm::BasicBlock *block = llvm::BasicBlock::Create(llvm_context, name, func);
     return block;
 }
 
