@@ -732,12 +732,36 @@ static bool CheckIfStmt(const TreeNode *u) {
 }
 
 static bool CheckRepeatStmt(const TreeNode *u) {
-    // TODO
-    return true;
+    bool ret = true;
+    for (TreeNode *p = u->child->child; p; p = p->sibling) {
+        if (not CheckStmt(p)) {
+            ret = false;
+        }
+    }
+    std::pair<bool, Type> p = CheckExpression(u->child->sibling);
+    if (p.first && not IsAlmostSame(p.second, Type::Bool())) {
+        LOG_ERROR(u->child->sibling, SemError("repeat condition has to be boolean"));
+        ret = false;
+    }
+    if (not p.first) {
+        ret = false;
+    }
+    return ret;
 }
 
 static bool CheckWhileStmt(const TreeNode *u) {
-    // TODO
+    bool ret = true;
+    std::pair<bool, Type> p = CheckExpression(u->child);
+    if (p.first && not IsAlmostSame(p.second, Type::Bool())) {
+        LOG_ERROR(u, SemError("while condition has to be boolean"));
+        ret = false;
+    }
+    if (not p.first) {
+        ret = false;
+    }
+    if (not CheckStmt(u->child->sibling)) {
+        ret = false;
+    }
     return true;
 }
 

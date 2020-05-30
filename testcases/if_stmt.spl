@@ -1,0 +1,49 @@
+program for_stmt;
+const
+    real_c = 5.5;
+type
+    student = record
+        id, age: integer;
+        gender: char;
+    end;
+var
+    i, x: integer;
+    j: char;
+    s: student;
+    b: boolean;
+    arr: array[-5..5] of student;
+procedure multwo(var x:integer);
+begin
+    x := x * 2;
+end;
+begin
+    if b and (i < 5) then begin
+        goto 5;
+    end else begin
+        writeln;
+    end;
+
+    if b and j then begin
+        writeln;
+    end else begin
+        writeln;
+    end;
+
+    while b and (i < 5) do begin
+        goto 5;
+        writeln;
+    end;
+
+    while b and j do begin
+        goto 5;
+        writeln;
+    end;
+
+    repeat
+        writeln;
+    until b and (i < 5);
+
+    repeat
+        writeln;
+    until b and j;
+end.
