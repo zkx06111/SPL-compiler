@@ -53,7 +53,8 @@ class GeneratorContext {
     std::vector<TypeContext> type_c;
     std::vector<ValueContext> val_c;
     std::stack<FuncSign> scope_stk;
-    std::string scope_name;
+
+    std::vector<std::vector<std::pair<std::string, ExValue>>> pregs;
 };
 
 extern GeneratorContext gen_c;

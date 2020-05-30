@@ -571,13 +571,13 @@ ExValue DoSqr(const ExValue &val) {
 
 ExValue DoSqrt(const ExValue &val) {
     ExValue ret;
-    ret.type = val.type;
+    ret.type = sem::Type::Real();
 
     if (val.is_const) {
         ret.is_const = true;
         ret.val_r = std::sqrt(val.val_r);
     } else {
-        ret.value = DoSqrt(ret.type, val.Value());
+        ret.value = DoSqrt(ret.type, Cast(ret.type, val).Value());
     }
     return ret;
 }
@@ -615,20 +615,20 @@ ExValue DoChr(const ExValue &val) {
 
 ExValue DoOrd(const ExValue &val) {
     ExValue ret;
-    ret.type = val.type;
+    ret.type = sem::Type::Int();
 
     if (val.is_const) {
         ret.is_const = true;
         ret.val_i = val.val_i;
     } else {
-        ret.value = DoOrd(ret.type, val.Value());
+        ret.value = DoOrd(ret.type, Cast(ret.type, val).Value());
     }
     return ret;
 }
 
 ExValue DoOdd(const ExValue &val) {
     ExValue ret;
-    ret.type = val.type;
+    ret.type = sem::Type::Bool();
 
     if (val.is_const) {
         ret.is_const = true;

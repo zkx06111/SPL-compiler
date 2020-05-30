@@ -116,8 +116,12 @@ static void GenSubroutine(const TreeNode *u) {
     GenTypePart(v);
     v = v->sibling;
     GenVarPart(v);
-    // v = v->sibling;
-    // GenRoutinePart(v);
+
+    auto sign = gen_c.GetCurrentFunction();
+    sign.Leave();
+    v = v->sibling;
+    GenRoutinePart(v);
+    sign.Restart();
 
     v = u->child->sibling;
     GenRoutineBody(v);

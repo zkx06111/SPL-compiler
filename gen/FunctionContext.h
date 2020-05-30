@@ -13,20 +13,24 @@ namespace gen {
 
 struct FuncSign {
     llvm::Function *fn;
-    std::string prefix, fn_name;
+    llvm::BasicBlock *block;
+    std::string fn_name;
     sem::Type ret;
     std::vector<std::pair<std::string, sem::Type>> args;
     std::vector<int> mut_args;
+    std::vector<std::pair<std::string, ExValue>> pregs;
 
     ExValue Call(std::vector<ExValue> params);
     void Return();
+    void Leave();
+    void Restart();
 };
 
 class FunctionContext {
   public:
     FuncSign GetSign(const std::string &name, const sem::Type &ret,
         const std::vector<std::pair<std::string, sem::Type>> &args,
-        const std::vector<int> mut_args, const std::string &prefix = "");
+        const std::vector<int> mut_args);
     void NewFunc(FuncSign &sign);
 
     bool HasName(const std::string &name) const;

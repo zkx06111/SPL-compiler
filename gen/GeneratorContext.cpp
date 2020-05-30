@@ -18,6 +18,7 @@ void GeneratorContext::NewScope() {
     label_c.emplace_back();
     type_c.emplace_back();
     val_c.emplace_back();
+    pregs.emplace_back();
 }
 
 void GeneratorContext::EndScope() {
@@ -26,6 +27,7 @@ void GeneratorContext::EndScope() {
     label_c.pop_back();
     type_c.pop_back();
     val_c.pop_back();
+    pregs.pop_back();
 }
 
 bool GeneratorContext::IsGlobal() const {
@@ -36,6 +38,10 @@ void
 GeneratorContext::NewVariable(const std::string &name, const sem::Type &type,
         bool is_ref) {
     val_c.back().NewVariable(name, type, is_ref);
+    if (val_c.size() > 1) {
+        ExValue eval = val_c.back().GetVariable(name);
+        pregs.back().emplace_back(name, eval);
+    }
 }
 
 bool GeneratorContext::HasVariable(const std::string &name) const {
@@ -100,9 +106,13 @@ ExValue GeneratorContext::GetConst(const std::string &name) const {
 void GeneratorContext::NewFunc(const std::string &name, const sem::Type &ret,
         const std::vector<std::pair<std::string, sem::Type>> &args,
         const std::vector<int> mut_args) {
-    FuncSign sign = func_c.back().GetSign(name, ret, args, mut_args, scope_name);
+    FuncSign sign = func_c.back().GetSign(name, ret, args, mut_args);
+    if (pregs.empty()) {
+        sign.pregs.clear();
+    } else {
+        sign.pregs = pregs.back();
+    }
     scope_stk.push(sign);
-    scope_name += name + "#";
 }
 
 void GeneratorContext::BeginFunc() {
@@ -118,12 +128,6 @@ void GeneratorContext::EndFunc() {
     FuncSign sign = scope_stk.top();
     sign.Return();
     scope_stk.pop();
-    int pos = scope_name.rfind('#', scope_name.size() - 2);
-    if (pos >= 0) {
-        scope_name = scope_name.substr(0, pos);
-    } else {
-        scope_name = "";
-    }
 }
 
 bool GeneratorContext::HasFunction(const std::string &name) const {

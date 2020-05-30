@@ -11,6 +11,9 @@ namespace gen {
 
 ExValue FuncSign::Call(std::vector<ExValue> params) {
     std::vector<llvm::Value *> params_val;
+    for (const auto &[_, eval] : pregs) {
+        params_val.emplace_back(eval.Addr());
+    }
     for (int i = 0, j = 0; i < params.size(); i++) {
         if (j < mut_args.size() && mut_args[j] == i) {
             params[i].is_const = false;
@@ -43,11 +46,19 @@ void FuncSign::Return() {
     gen_c.EndScope();
 }
 
+void FuncSign::Leave() {
+    block = LabelContext::NewBlock("fn_" + fn_name + "_body");
+    ir_builder.CreateBr(block);
+}
+
+void FuncSign::Restart() {
+    ir_builder.SetInsertPoint(block);
+}
+
 FuncSign FunctionContext::GetSign(const std::string &name, const sem::Type &ret,
         const std::vector<std::pair<std::string, sem::Type>> &args,
-        const std::vector<int> mut_args, const std::string &prefix) {
+        const std::vector<int> mut_args) {
     FuncSign sign;
-    sign.prefix = prefix;
     sign.fn_name = name;
     sign.ret = ret;
     sign.args = args;
@@ -58,6 +69,9 @@ FuncSign FunctionContext::GetSign(const std::string &name, const sem::Type &ret,
 
 void FunctionContext::NewFunc(FuncSign &sign) {
     std::vector<llvm::Type *> arg_types;
+    for (const auto &[_, eval] : sign.pregs) {
+        arg_types.emplace_back(TypeContext::PtrType(eval.type));
+    }
     for (int i = 0, j = 0; i < sign.args.size(); i++) {
         if (j < sign.mut_args.size() && i == sign.mut_args[j]) {
             arg_types.emplace_back(TypeContext::PtrType(sign.args[i].second));
@@ -76,6 +90,13 @@ void FunctionContext::NewFunc(FuncSign &sign) {
     ir_builder.SetInsertPoint(block);
 
     auto arg_it = func->arg_begin();
+    for (const auto &[name, eval] : sign.pregs) {
+        gen_c.NewVariable(name, eval.type, true);
+        arg_it->setName(name);
+        ExValue new_eval = gen_c.GetVariable(name);
+        ir_builder.CreateStore(arg_it, new_eval.addr);
+        ++arg_it;
+    }
     for (int i = 0, j = 0; i < sign.args.size(); i++) {
         const auto &[name, ty] = sign.args[i];
         if (j < sign.mut_args.size() && i == sign.mut_args[j]) {
