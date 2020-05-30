@@ -380,6 +380,9 @@ CheckExpressionList(const TreeNode *u) {
     // std::cerr << "CheckExpressionList" << std::endl;
     bool resb = true;
     std::vector<Type> resv;
+    if (u == nullptr) {
+        return std::make_pair(resb, resv);
+    }
     for (TreeNode *p = u->child; p; p = p->sibling) {
         std::pair<bool, Type> t = CheckExpression(p);
         resb = resb && t.first;
@@ -623,9 +626,84 @@ static bool CheckAssignStmt(const TreeNode *u) {
     return ret;
 }
 
+static bool CheckReadFactor(const TreeNode *u) {
+    if (strcmp(u->type, "ID") == 0) {
+        Type t;
+        try {
+            t = sym_t.GetVarType(u->vals);
+        } catch (const SemError &e) {
+            LOG_ERROR(u, e);
+            return false;
+        }
+        if (IsAlmostSame(t, Type::Char()) || IsAlmostSame(t, Type::Int())
+            || IsAlmostSame(t, Type::Real())) {
+            return true;
+        }
+        LOG_ERROR(u, SemError("cannot read this type"));
+        return false;
+    }
+    if (strcmp(u->type, "factor") != 0 || strcmp(u->child->sibling->type, "LP") == 0) {
+        LOG_ERROR(u, SemError("must read a variable"));
+        return false;
+    }
+    std::pair<bool, Type> p = CheckArrRec(u->child);
+    if (p.first == false) {
+        return false;
+    }
+    if (IsAlmostSame(p.second, Type::Char()) || IsAlmostSame(p.second, Type::Int())
+        || IsAlmostSame(p.second, Type::Real())) {
+        return true;
+    }
+    LOG_ERROR(u, SemError("cannot read this type"));
+    return false;
+}
+
 static bool CheckProcStmt(const TreeNode *u) {
-    // TODO
-    return true;
+    bool ret = true;
+    if (strcmp(u->child->type, "READ") == 0) {
+        return CheckReadFactor(getKthChild(u, 3));
+    }
+    if (strcmp(u->child->type, "ID") == 0) {
+        Func f;
+        try {
+            f = sym_t.GetFunc(u->child->vals);
+        } catch (const SemError &e) {
+            LOG_ERROR(u, e);
+            ret = false;
+        }
+        
+        std::pair<bool, std::vector<Type> > expr;
+        if (u->child->sibling == nullptr) {
+            expr.first = true;
+            expr.second = std::vector<Type>();
+        } else 
+            expr = CheckExpressionList(getKthChild(u, 3));
+        if (expr.first && ret) {
+            try {
+                f.ApplyArgs(expr.second);
+            } catch (const SemError &e) {
+                LOG_ERROR(u, e);
+                ret = false;
+            }
+        }
+    } else if (strcmp(u->child->type, "sys_proc")) {
+        // only sys_proc is write & writeln
+        std::pair<bool, std::vector<Type> > expr = CheckExpressionList(getKthChild(u, 3));
+        if (not expr.first) {
+            ret = false;
+        }
+        for (auto t : expr.second) {
+            if (t == Type::Void()) continue;
+            if (not IsAlmostSame(t, Type::Char())
+            &&  not IsAlmostSame(t, Type::Int())
+            &&  not IsAlmostSame(t, Type::Real())
+            &&  not IsAlmostSame(t, Type::Bool())) {
+                LOG_ERROR(u, SemError("must write int/char/bool/real"));
+                break;
+            }
+        }
+    }
+    return ret;
 }
 
 static bool CheckCompoundStmt(const TreeNode *u) {
@@ -711,6 +789,9 @@ static std::pair<bool, std::vector<Type> > CheckCaseExprList(const TreeNode *u, 
         } catch (const SemError &e) {
             SemError e1("invalid case value type, " + std::string(e.what()));
             LOG_ERROR(p, e1);
+            resb = false;
+        }
+        if (not CheckStmt(p->child->sibling)) {
             resb = false;
         }
     }
