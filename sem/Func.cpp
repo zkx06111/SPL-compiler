@@ -13,6 +13,9 @@ bool Func::CanCall(const std::vector<Type> &passed_args) const {
             if (!passed_args[i].is_lhs) {
                 return false;
             }
+            if (!IsAlmostSame(passed_args[i], args[i])) {
+                return false;
+            }
             ++j;
         }
         if (!CanAssign(args[i], passed_args[i])) {
@@ -32,6 +35,10 @@ void Func::ApplyArgs(const std::vector<Type> &passed_args) const {
             if (!passed_args[i].is_lhs) {
                 throw SemError("the " + OrderStr(i + 1) +
                     " parameter is variable and need an lval");
+            }
+            if (!IsAlmostSame(passed_args[i], args[i])) {
+                throw SemError(
+                    "can't assign the " + OrderStr(i + 1) + " parameter");
             }
             ++j;
         }
