@@ -632,28 +632,84 @@ static void GenRoutine(const TreeNode *u) {
     GenRoutineBody(u->child->sibling);
 }
 
+static std::string GetFilename(std::string path) {
+    if (path.back() == '/' || path.back() == '\\') {
+        path.pop_back();
+    }
+    int pos0 = path.rfind("/");
+    int pos1 = path.rfind("\\");
+    int pos = std::max(pos0, pos1) + 1;
+    return path.substr(pos);
+}
+
 void GenCode(const TreeNode *u, const std::string &file_name) {
-    src_file_name = file_name;
+    src_file_name = GetFilename(file_name);
     sem::sym_t = sem::SymbolTable();
 
     GenRoutine(u->child);
     ir_builder.CreateRet(ConstContext::Const(0));
 
     std::error_code EC;
-    llvm::raw_fd_ostream ll_out(file_name + ".ll", EC);
+    llvm::raw_fd_ostream ll_out(src_file_name + ".ll", EC);
     llvm_module.print(ll_out, nullptr);
 }
 
-void GenExe(std::string output_name) {
+void GenExe(std::string output_name, bool debug) {
     if (output_name == "") {
         int pos = src_file_name.rfind(".");
         output_name = src_file_name.substr(0, pos);
     }
+#if defined(__WIN32__) || defined(_WIN32)
+    output_name += ".exe";
+#endif
     std::string ll_file_name = src_file_name + ".ll";
     std::string s_file_name = src_file_name + ".s";
 
     system(("llc " + ll_file_name).c_str());
     system(("gcc -o " + output_name + " -lm " + s_file_name).c_str());
+
+    if (!debug) {
+        system(("rm " + ll_file_name).c_str());
+        system(("rm " + s_file_name).c_str());
+    }
+}
+
+void GenAsm(std::string output_name, bool debug) {
+    if (output_name == "") {
+        int pos = src_file_name.rfind(".");
+        output_name = src_file_name.substr(0, pos) + ".s";
+    }
+    std::string ll_file_name = src_file_name + ".ll";
+
+    system(("llc -filetype=asm " + ll_file_name + " -o " + output_name).c_str());
+
+    if (!debug) {
+        system(("rm " + ll_file_name).c_str());
+    }
+}
+
+void GenObj(std::string output_name, bool debug) {
+    if (output_name == "") {
+        int pos = src_file_name.rfind(".");
+        output_name = src_file_name.substr(0, pos) + ".o";
+    }
+    std::string ll_file_name = src_file_name + ".ll";
+
+    system(("llc -filetype=obj " + ll_file_name + " -o " + output_name).c_str());
+
+    if (!debug) {
+        system(("rm " + ll_file_name).c_str());
+    }
+}
+
+void GenLlvm(std::string output_name, bool debug) {
+    if (output_name == "") {
+        int pos = src_file_name.rfind(".");
+        output_name = src_file_name.substr(0, pos) + ".ll";
+    }
+    std::string ll_file_name = src_file_name + ".ll";
+
+    system(("mv " + ll_file_name + " " + output_name).c_str());
 }
 
 }

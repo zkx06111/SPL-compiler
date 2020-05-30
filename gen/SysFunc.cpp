@@ -104,7 +104,7 @@ void Read(const std::vector<ExValue> &params, bool newline) {
             fmt_str += "%d";
             args.emplace_back(eval.addr);
         } else if (ty == sem::Type::REAL) {
-            fmt_str += "%f";
+            fmt_str += "%lf";
             args.emplace_back(eval.addr);
         } else if (ty == sem::Type::CHAR) {
             fmt_str += "%c";

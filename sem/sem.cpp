@@ -7,8 +7,10 @@
 #include "SymbolTable.h"
 #include "TypeUtil.h"
 
+static std::string src_file_name;
+
 #define LOG_ERROR(u, e) do { \
-    std::cout << "line " << u->lineNumber << ": " << e.what() << std::endl; \
+    std::cout << src_file_name << ":" << u->lineNumber << ": " << e.what() << std::endl; \
 } while (0)
 
 namespace sem {
@@ -788,7 +790,8 @@ static bool CheckRoutine(const TreeNode *u) {
     return ret_head && ret_body;
 }
 
-bool CheckSem(const TreeNode *u) {
+bool CheckSem(const TreeNode *u, const std::string &file_name) {
+    src_file_name = file_name;
     return CheckRoutine(u->child);
 }
 

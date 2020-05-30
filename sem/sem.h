@@ -12,6 +12,6 @@ Type CheckSimpleTypeDecl(const TreeNode *u);
 std::pair<std::vector<std::pair<std::string, Type>>, std::vector<int>>
 CheckParametersDecl(const TreeNode *u);
 
-bool CheckSem(const TreeNode *u);
+bool CheckSem(const TreeNode *u, const std::string &file_name);
 
 }
