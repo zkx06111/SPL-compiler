@@ -34,8 +34,8 @@ bool GeneratorContext::IsGlobal() const {
 
 void
 GeneratorContext::NewVariable(const std::string &name, const sem::Type &type,
-        bool is_global, bool is_ref) {
-    val_c.back().NewVariable(name, type, is_global, is_ref);
+        bool is_ref) {
+    val_c.back().NewVariable(name, type, is_ref);
 }
 
 bool GeneratorContext::HasVariable(const std::string &name) const {
@@ -164,14 +164,6 @@ llvm::Type *GeneratorContext::GetType(const std::string &name) const {
 
 void GeneratorContext::NewLabel(int label) {
     label_c.back().NewLabel(label);
-}
-
-bool GeneratorContext::HasLabel() const {
-    return label_c.back().HasLabel();
-}
-
-void GeneratorContext::DeclLabel(int label) {
-    label_c.back().DeclLabel(label);
 }
 
 llvm::BasicBlock *GeneratorContext::GetBlock(int label) const {

@@ -7,7 +7,7 @@
 namespace gen {
 
 void ValueContext::NewVariable(const std::string &name, const sem::Type &type,
-        bool is_global, bool is_ref) {
+        bool is_ref) {
     llvm::Type *ty;
     if (is_ref) {
         ty = TypeContext::PtrType(type);
@@ -15,7 +15,7 @@ void ValueContext::NewVariable(const std::string &name, const sem::Type &type,
         ty = TypeContext::Type(type);
     }
     llvm::Value *value;
-    if (is_global) {
+    if (gen_c.IsGlobal()) {
         llvm::Constant *init;
         if (is_ref) {
             init = llvm::ConstantPointerNull::get(

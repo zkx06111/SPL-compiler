@@ -19,7 +19,7 @@ class GeneratorContext {
     bool IsGlobal() const;
     
     void NewVariable(const std::string &name, const sem::Type &ty,
-      bool is_global = true, bool is_ref = false);
+      bool is_ref = false);
     bool HasVariable(const std::string &name) const;
     ExValue GetVariable(const std::string &name) const;
     void ModifyVariable(const std::string &name, const ExValue &eval);
@@ -44,8 +44,6 @@ class GeneratorContext {
     llvm::Type *GetType(const std::string &name) const;
 
     void NewLabel(int label);
-    bool HasLabel() const;
-    void DeclLabel(int label);
     llvm::BasicBlock *GetBlock(int label) const;
 
   private:

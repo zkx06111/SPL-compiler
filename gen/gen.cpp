@@ -11,8 +11,8 @@
 #include "Operations.h"
 #include "SysFunc.h"
 
-#include <iostream>
-#define LOG(expr) std::cout << expr << std::endl
+// #include <iostream>
+// #define LOG(expr) std::cout << expr << std::endl
 
 namespace gen {
 
@@ -107,6 +107,7 @@ static void GenRoutineBody(const TreeNode *u);
 static void GenSubroutine(const TreeNode *u) {
     gen_c.NewScope();
 
+    gen_c.BeginFunc();
     auto v = u->child->child;
     GenLabelPart(v);
     v = v->sibling;
@@ -115,11 +116,10 @@ static void GenSubroutine(const TreeNode *u) {
     GenTypePart(v);
     v = v->sibling;
     GenVarPart(v);
-    v = v->sibling;
-    GenRoutinePart(v);
+    // v = v->sibling;
+    // GenRoutinePart(v);
 
     v = u->child->sibling;
-    gen_c.BeginFunc();
     GenRoutineBody(v);
     gen_c.EndFunc();
 }
@@ -177,7 +177,6 @@ static std::vector<ExValue> GenExpressionList(const TreeNode *u, bool &prop) {
 }
 
 static ExValue GenFactor(const TreeNode *u, bool &prop) {
-    LOG("factor, type = " << u->type);
     if (strcmp(u->type, "INTEGER") == 0) {
         ExValue ret = ConstContext::ConstEVal(u->vali);
         return ret;
@@ -194,7 +193,7 @@ static ExValue GenFactor(const TreeNode *u, bool &prop) {
         std::string name(u->vals);
         if (gen_c.HasFunction(name)) {
             FuncSign sign = gen_c.GetFunction(name);
-            if (sign.fn_name == name && sign.args.size() > 0) {
+            if (sign.args.size() > 0) {
                 ExValue ret = GetIDValue(name, prop);
                 return ret;
             } else {
@@ -592,11 +591,9 @@ static void GenStmt(const TreeNode *u, bool &prop) {
         }
         ir_builder.CreateBr(block);
         ir_builder.SetInsertPoint(block);
-        // gen_c.DeclLabel(label);
         prop = false;
         u = u->sibling;
     }
-    LOG("stmt: type = " << u->type);
     if (strcmp(u->type, "assign_stmt") == 0) {
         GenAssignStmt(u, prop);
     } else if (strcmp(u->type, "proc_stmt") == 0) {
@@ -620,7 +617,6 @@ static void GenStmt(const TreeNode *u, bool &prop) {
 
 static void GenCompoundStmt(const TreeNode *u, bool &prop) {
     for (const TreeNode *v = u->child->child; v; v = v->sibling) {
-        // prop = prop && !gen_c.HasLabel();
         GenStmt(v, prop);
     }
 }

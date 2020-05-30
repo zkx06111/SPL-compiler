@@ -8,12 +8,14 @@ enum class OutputType {
     EXE, OBJ, ASM, LL
 } output_type = OutputType::EXE;
 std::string input_name = "", output_name = "";
-bool debug = false, keep = false;
+bool debug = false, keep = false, b_type = false;
 
 std::string get_args(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0) {
-            if (i + 1 < argc) {
+            if (output_name != "") {
+                return "more than one output file name is specified";
+            } else if (i + 1 < argc) {
                 ++i;
                 output_name = argv[i];
             } else {
@@ -24,8 +26,11 @@ std::string get_args(int argc, char **argv) {
         } else if (strcmp(argv[i], "-k") == 0) {
             keep = true;
         } else if (strcmp(argv[i], "-t") == 0) {
-            if (i + 1 < argc) {
+            if (b_type) {
+                return "more than one output type is specified";
+            } else if (i + 1 < argc) {
                 ++i;
+                b_type = true;
                 if (strcmp(argv[i], "exe") == 0) {
                     output_type = OutputType::EXE;
                 } else if (strcmp(argv[i], "obj") == 0) {

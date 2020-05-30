@@ -79,17 +79,17 @@ void FunctionContext::NewFunc(FuncSign &sign) {
     for (int i = 0, j = 0; i < sign.args.size(); i++) {
         const auto &[name, ty] = sign.args[i];
         if (j < sign.mut_args.size() && i == sign.mut_args[j]) {
-            gen_c.NewVariable(name, ty, false, true);
+            gen_c.NewVariable(name, ty, true);
             ++j;
         } else {
-            gen_c.NewVariable(name, ty, false);
+            gen_c.NewVariable(name, ty);
         }
         arg_it->setName(name);
         ir_builder.CreateStore(arg_it, gen_c.GetVariable(name).addr);
         ++arg_it;
     }
     if (sign.ret.type != sem::Type::VOID) {
-        gen_c.NewVariable(sign.fn_name, sign.ret, false);
+        gen_c.NewVariable(sign.fn_name, sign.ret);
     }
 
     funcs[sign.fn_name] = sign;
