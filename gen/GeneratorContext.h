@@ -19,7 +19,7 @@ class GeneratorContext {
     bool IsGlobal() const;
     
     void NewVariable(const std::string &name, const sem::Type &ty,
-      bool is_ref = false);
+      bool is_ref = false, bool add_pregs = true);
     bool HasVariable(const std::string &name) const;
     ExValue GetVariable(const std::string &name) const;
     void ModifyVariable(const std::string &name, const ExValue &eval);

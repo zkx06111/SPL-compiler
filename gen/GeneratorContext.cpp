@@ -36,9 +36,9 @@ bool GeneratorContext::IsGlobal() const {
 
 void
 GeneratorContext::NewVariable(const std::string &name, const sem::Type &type,
-        bool is_ref) {
+        bool is_ref, bool add_pregs) {
     val_c.back().NewVariable(name, type, is_ref);
-    if (val_c.size() > 1) {
+    if (add_pregs && val_c.size() > 1) {
         ExValue eval = val_c.back().GetVariable(name);
         pregs.back().emplace_back(name, eval);
     }

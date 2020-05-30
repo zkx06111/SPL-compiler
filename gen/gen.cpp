@@ -283,9 +283,36 @@ static ExValue GenTerm(const TreeNode *u, bool &prop) {
         return ret;
     } else if (strcmp(u->type, "AND") == 0) {
         ExValue lhs = GenTerm(u->child, prop);
-        ExValue rhs = GenFactor(u->child->sibling, prop);
-        ExValue ret = DoAnd(lhs, rhs);
-        return ret;
+        if (lhs.type.type == sem::Type::BOOL) {
+            if (lhs.is_const) {
+                if (!lhs.val_b) {
+                    return ConstContext::ConstEVal(false);
+                } else {
+                    ExValue rhs = GenFactor(u->child->sibling, prop);
+                    return rhs;
+                }
+            } else {
+                ExValue cmp = CmpEqual(lhs, ConstContext::ConstEVal(false));
+                ExValue ret = gen_c.GetVariable("_#_bool_sc");
+                llvm::BasicBlock *bt = LabelContext::NewBlock("and_sc");
+                llvm::BasicBlock *bf = LabelContext::NewBlock("and_rhs");
+                llvm::BasicBlock *after = LabelContext::NewBlock("after_and");
+                ir_builder.CreateCondBr(cmp.Value(), bt, bf);
+                ir_builder.SetInsertPoint(bt);
+                Assign(ret, ConstContext::ConstEVal(false));
+                ir_builder.CreateBr(after);
+                ir_builder.SetInsertPoint(bf);
+                ExValue rhs = GenFactor(u->child->sibling, prop);
+                Assign(ret, DoAnd(lhs, rhs));
+                ir_builder.CreateBr(after);
+                ir_builder.SetInsertPoint(after);
+                return ret;
+            }
+        } else {
+            ExValue rhs = GenFactor(u->child->sibling, prop);
+            ExValue ret = DoAnd(lhs, rhs);
+            return ret;
+        }
     } else {
         ExValue ret = GenFactor(u, prop);
         return ret;
@@ -305,9 +332,36 @@ static ExValue GenExpr(const TreeNode *u, bool &prop) {
         return ret;
     } else if (strcmp(u->type, "OR") == 0) {
         ExValue lhs = GenExpr(u->child, prop);
-        ExValue rhs = GenTerm(u->child->sibling, prop);
-        ExValue ret = DoOr(lhs, rhs);
-        return ret;
+        if (lhs.type.type == sem::Type::BOOL) {
+            if (lhs.is_const) {
+                if (lhs.val_b) {
+                    return ConstContext::ConstEVal(true);
+                } else {
+                    ExValue rhs = GenFactor(u->child->sibling, prop);
+                    return rhs;
+                }
+            } else {
+                ExValue cmp = CmpEqual(lhs, ConstContext::ConstEVal(true));
+                ExValue ret = gen_c.GetVariable("_#_bool_sc");
+                llvm::BasicBlock *bt = LabelContext::NewBlock("or_sc");
+                llvm::BasicBlock *bf = LabelContext::NewBlock("or_rhs");
+                llvm::BasicBlock *after = LabelContext::NewBlock("after_or");
+                ir_builder.CreateCondBr(cmp.Value(), bt, bf);
+                ir_builder.SetInsertPoint(bt);
+                Assign(ret, ConstContext::ConstEVal(true));
+                ir_builder.CreateBr(after);
+                ir_builder.SetInsertPoint(bf);
+                ExValue rhs = GenFactor(u->child->sibling, prop);
+                Assign(ret, DoOr(lhs, rhs));
+                ir_builder.CreateBr(after);
+                ir_builder.SetInsertPoint(after);
+                return ret;
+            }
+        } else {
+            ExValue rhs = GenFactor(u->child->sibling, prop);
+            ExValue ret = DoOr(lhs, rhs);
+            return ret;
+        }
     } else {
         ExValue ret = GenTerm(u, prop);
         return ret;
@@ -637,6 +691,7 @@ static void GenRoutine(const TreeNode *u) {
     GenConstPart(v);
     v = v->sibling;
     GenTypePart(v);
+    gen_c.NewVariable("_#_bool_sc", sem::Type::Bool(), false, false);
     v = v->sibling;
     GenVarPart(v);
     v = v->sibling;

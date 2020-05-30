@@ -85,10 +85,10 @@ llvm::Value *DoAnd(const sem::Type &ty, llvm::Value *lhs, llvm::Value *rhs) {
     return ir_builder.CreateAnd(lhs, rhs, "binop_and");
 }
 llvm::Value *DoOr(const sem::Type &ty, llvm::Value *lhs, llvm::Value *rhs) {
-    return ir_builder.CreateOr(lhs, rhs, "binop_and");
+    return ir_builder.CreateOr(lhs, rhs, "binop_or");
 }
 llvm::Value *DoXor(const sem::Type &ty, llvm::Value *lhs, llvm::Value *rhs) {
-    return ir_builder.CreateXor(lhs, rhs, "binop_and");
+    return ir_builder.CreateXor(lhs, rhs, "binop_xor");
 }
 llvm::Value *DoNot(const sem::Type &ty, llvm::Value *val) {
     return ir_builder.CreateNot(val, "unop_not");
