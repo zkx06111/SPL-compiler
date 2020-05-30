@@ -372,6 +372,7 @@ static std::pair<bool, Type> CheckArrRec(const TreeNode *u) {
             }
         }
     }
+    lelem.is_lhs = true;
     return std::make_pair(ret, lelem);
 }
 
@@ -461,11 +462,12 @@ static std::pair<bool, Type> CheckID(const TreeNode *u) {
     Type rest;
     bool resb = true;
     try {
-        if (sym_t.CheckFunc(u->vals)) {
-            rest = sym_t.GetFunc(u->vals).ret;
-        }
-        else if (sym_t.CheckVar(u->vals)) {
+        if (sym_t.CheckVar(u->vals)) {
             rest = sym_t.GetVarType(u->vals);
+            rest.is_lhs = true;
+        }
+        else if (sym_t.CheckFunc(u->vals)) {
+            rest = sym_t.GetFunc(u->vals).ret;
         }
         else if (sym_t.CheckConst(u->vals)) {
             rest = sym_t.GetConstType(u->vals);

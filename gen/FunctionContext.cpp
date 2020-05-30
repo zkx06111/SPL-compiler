@@ -36,6 +36,7 @@ void FuncSign::Return() {
         ir_builder.CreateRetVoid();
     } else {
         ExValue rete = gen_c.GetVariable(fn_name);
+        rete.is_const = false;
         ir_builder.CreateRet(rete.Value());
     }
 

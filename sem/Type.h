@@ -22,6 +22,7 @@ struct Type {
     } type = VOID;
     int ind = 0;
     int depth = 0;
+    bool is_lhs = false;
 
     bool operator==(const Type &rhs) const;
     bool operator!=(const Type &rhs) const;
