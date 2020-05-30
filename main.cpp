@@ -90,13 +90,13 @@ int main(int argc, char **argv) {
         return -3;
     }
 
-    bool sem_ret = sem::CheckSem(root, argv[1]);
+    bool sem_ret = sem::CheckSem(root, input_name);
     if (!sem_ret) {
         std::cout << "sematic error occurred" << std::endl;
         return -4;
     }
 
-    gen::GenCode(root, argv[1]);
+    gen::GenCode(root, input_name);
 
     if (output_type == OutputType::EXE) {
         gen::GenExe(output_name, keep);

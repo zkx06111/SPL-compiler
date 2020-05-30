@@ -5,9 +5,14 @@
 #include "SysFunc.h"
 #include "TypeUtil.h"
 
+#include <iostream>
+
 namespace gen {
 
 llvm::Value *ExValue::Value() const {
+    if (is_ref) {
+        return Deref(Deref(addr));
+    }
     if (addr != nullptr && !is_const) {
         return Deref(addr);
     }
@@ -23,6 +28,14 @@ llvm::Value *ExValue::Value() const {
         }
     }
     return value;
+}
+
+llvm::Value *ExValue::Addr() const {
+    if (is_ref) {
+        return Deref(addr);
+    } else {
+        return addr;
+    }
 }
 
 ExValue Cast(const sem::Type &type, const ExValue &val) {
@@ -81,7 +94,7 @@ void Assign(ExValue &dst, const ExValue &src) {
         dst.is_const = false;
     }
 
-    Assign(dst.type, dst.addr, src.type, src.Value());
+    Assign(dst.type, dst.Addr(), src.type, src.Value());
 }
 
 ExValue DoAdd(const ExValue &lhs, const ExValue &rhs) {

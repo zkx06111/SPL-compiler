@@ -372,13 +372,13 @@ routine_part:
         addRightChild(fa[top], $2);
     }
 |   routine_part procedure_decl {
-        addLeftChild(fa[top], $2);
+        addRightChild(fa[top], $2);
     }
 |   function_decl {
-        addLeftChild(fa[top], $1);
+        addRightChild(fa[top], $1);
     }
 |   procedure_decl {
-        addLeftChild(fa[top], $1);
+        addRightChild(fa[top], $1);
     }
 |   /* empty */ {
     }

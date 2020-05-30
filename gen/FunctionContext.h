@@ -18,7 +18,7 @@ struct FuncSign {
     std::vector<std::pair<std::string, sem::Type>> args;
     std::vector<int> mut_args;
 
-    ExValue Call(const std::vector<ExValue> &params);
+    ExValue Call(std::vector<ExValue> params);
     void Return();
 };
 

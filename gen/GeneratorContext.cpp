@@ -1,7 +1,5 @@
 #include "GeneratorContext.h"
 
-#include <iostream>
-
 namespace gen {
 
 GeneratorContext gen_c;
@@ -36,12 +34,8 @@ bool GeneratorContext::IsGlobal() const {
 
 void
 GeneratorContext::NewVariable(const std::string &name, const sem::Type &type,
-        bool is_global) {
-    if (is_global) {
-        val_c.front().NewVariable(name, type, true);
-    } else {
-        val_c.back().NewVariable(name, type);
-    }
+        bool is_global, bool is_ref) {
+    val_c.back().NewVariable(name, type, is_global, is_ref);
 }
 
 bool GeneratorContext::HasVariable(const std::string &name) const {

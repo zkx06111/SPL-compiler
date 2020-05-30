@@ -16,9 +16,11 @@ struct ExValue {
         char val_c;
     };
     bool is_const = false;
+    bool is_ref = false;
     llvm::Value *addr = nullptr;
 
     llvm::Value *Value() const;
+    llvm::Value *Addr() const;
 };
 
 ExValue Cast(const sem::Type &type, const ExValue &val);

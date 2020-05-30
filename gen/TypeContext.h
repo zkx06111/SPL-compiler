@@ -10,6 +10,7 @@ namespace gen {
 class TypeContext {
   public:
     static llvm::Type *Type(const sem::Type &type);
+    static llvm::PointerType *PtrType(const sem::Type &type);
     static llvm::Type *Int();
     static llvm::Type *Real();
     static llvm::Type *Char();

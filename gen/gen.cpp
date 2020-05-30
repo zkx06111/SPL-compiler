@@ -105,11 +105,9 @@ static void GenFunctionHead(const TreeNode *u, bool is_func) {
 static void GenRoutinePart(const TreeNode *u);
 static void GenRoutineBody(const TreeNode *u);
 static void GenSubroutine(const TreeNode *u) {
-    auto v = u->child->rchild;
-    GenRoutinePart(v);
+    gen_c.NewScope();
 
-    gen_c.BeginFunc();
-    v = u->child->child;
+    auto v = u->child->child;
     GenLabelPart(v);
     v = v->sibling;
     GenConstPart(v);
@@ -117,10 +115,12 @@ static void GenSubroutine(const TreeNode *u) {
     GenTypePart(v);
     v = v->sibling;
     GenVarPart(v);
+    v = v->sibling;
+    GenRoutinePart(v);
 
     v = u->child->sibling;
+    gen_c.BeginFunc();
     GenRoutineBody(v);
-
     gen_c.EndFunc();
 }
 
@@ -135,7 +135,7 @@ static void GenRoutinePart(const TreeNode *u) {
     }
 }
 
-static ExValue GenExpression(const TreeNode *u, bool prop);
+static ExValue GenExpression(const TreeNode *u, bool &prop);
 
 static ExValue GetArrayElement(const std::string &name, const ExValue &inde) {
     ExValue arre = gen_c.GetVariable(name);
@@ -147,7 +147,7 @@ static ExValue GetArrayElement(const std::string &name, const ExValue &inde) {
     ExValue bias = DoSub(indei, base_eval);
 
     ExValue ret;
-    ret.addr = ir_builder.CreateGEP(arre.addr,
+    ret.addr = ir_builder.CreateGEP(arre.Addr(),
         { ConstContext::Const(0), bias.Value() });
     ret.type = arr.GetElementType();
     ret.type = GetSimpleType(ret.type);
@@ -160,22 +160,23 @@ GetRecordMember(const std::string &rec_name, const std::string &mem_name) {
     sem::Record rec = sem::sym_t.GetRecord(rece.type);
     int bias = rec.name2ind[mem_name];
     ExValue ret;
-    ret.addr = ir_builder.CreateGEP(rece.addr,
+    ret.addr = ir_builder.CreateGEP(rece.Addr(),
         { ConstContext::Const(0), ConstContext::Const(bias) });
     ret.type = rec.GetDataType(mem_name);
     ret.type = GetSimpleType(ret.type);
     return ret;
 }
 
-static std::vector<ExValue> GenExpressionList(const TreeNode *u, bool prop) {
+static std::vector<ExValue> GenExpressionList(const TreeNode *u, bool &prop) {
     std::vector<ExValue> ret;
     for (const TreeNode *v = u->child; v; v = v->sibling) {
-        ret.emplace_back(GenExpression(v->child, prop));
+        auto eval = GenExpression(v->child, prop);
+        ret.emplace_back(eval);
     }
     return ret;
 }
 
-static ExValue GenFactor(const TreeNode *u, bool prop) {
+static ExValue GenFactor(const TreeNode *u, bool &prop) {
     if (strcmp(u->type, "INTEGER") == 0) {
         ExValue ret = ConstContext::ConstEVal(u->vali);
         return ret;
@@ -212,6 +213,7 @@ static ExValue GenFactor(const TreeNode *u, bool prop) {
             std::string name(v->vals);
             v = v->sibling;
             if (strcmp(v->type, "LP") == 0) {
+                prop = false;
                 auto params = GenExpressionList(v->sibling, prop);
                 FuncSign sign = gen_c.GetFunction(name);
                 ExValue ret = sign.Call(params);
@@ -254,7 +256,7 @@ static ExValue GenFactor(const TreeNode *u, bool prop) {
     }
 }
 
-static ExValue GenTerm(const TreeNode *u, bool prop) {
+static ExValue GenTerm(const TreeNode *u, bool &prop) {
     if (strcmp(u->type, "MUL") == 0) {
         ExValue lhs = GenTerm(u->child, prop);
         ExValue rhs = GenFactor(u->child->sibling, prop);
@@ -281,7 +283,7 @@ static ExValue GenTerm(const TreeNode *u, bool prop) {
     }
 }
 
-static ExValue GenExpr(const TreeNode *u, bool prop) {
+static ExValue GenExpr(const TreeNode *u, bool &prop) {
     if (strcmp(u->type, "PLUS") == 0) {
         ExValue lhs = GenExpr(u->child, prop);
         ExValue rhs = GenTerm(u->child->sibling, prop);
@@ -303,7 +305,7 @@ static ExValue GenExpr(const TreeNode *u, bool prop) {
     }
 }
 
-static ExValue GenExpression(const TreeNode *u, bool prop) {
+static ExValue GenExpression(const TreeNode *u, bool &prop) {
     if (strcmp(u->type, "EQUAL") == 0) {
         ExValue lhs = GenExpression(u->child, prop);
         ExValue rhs = GenExpr(u->child->sibling, prop);
@@ -340,10 +342,10 @@ static ExValue GenExpression(const TreeNode *u, bool prop) {
     }
 }
 
-static void GenCompoundStmt(const TreeNode *u, bool prop);
-static void GenStmt(const TreeNode *u, bool prop);
+static void GenCompoundStmt(const TreeNode *u, bool &prop);
+static void GenStmt(const TreeNode *u, bool &prop);
 
-static void GenAssignStmt(const TreeNode *u, bool prop) {
+static void GenAssignStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
     std::string name(v->vals);
     v = v->sibling;
@@ -357,18 +359,19 @@ static void GenAssignStmt(const TreeNode *u, bool prop) {
         ExValue inde = GenExpression(v->child, prop);
         ExValue srce = GenExpression(v->sibling->sibling->sibling->child, prop);
         ExValue dste = GetArrayElement(name, inde);
-        Assign(dste.addr, srce.Value());
+        Assign(dste.Addr(), srce.Value());
     } else if (strcmp(v->type, "DOT") == 0) {
         v = v->sibling;
         std::string member_name(v->vals);
         ExValue srce = GenExpression(v->sibling->sibling->child, prop);
         ExValue dste = GetRecordMember(name, member_name);
-        Assign(dste.addr, srce.Value());
+        Assign(dste.Addr(), srce.Value());
     }
 }
 
-static void GenProcStmt(const TreeNode *u, bool prop) {
+static void GenProcStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
+    prop = false;
     if (strcmp(v->type, "ID") == 0) {
         std::string name(v->vals);
         FuncSign sign = gen_c.GetFunction(name);
@@ -388,7 +391,7 @@ static void GenProcStmt(const TreeNode *u, bool prop) {
     }
 }
 
-static void GenIfStmt(const TreeNode *u, bool prop) {
+static void GenIfStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
     ExValue conde = GenExpression(v->child, prop);
 
@@ -425,7 +428,7 @@ static void GenIfStmt(const TreeNode *u, bool prop) {
     ir_builder.SetInsertPoint(after_if);
 }
 
-static void GenRepeatStmt(const TreeNode *u, bool prop) {
+static void GenRepeatStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
 
     llvm::BasicBlock *loop = LabelContext::NewBlock("loop_repeat");
@@ -433,16 +436,17 @@ static void GenRepeatStmt(const TreeNode *u, bool prop) {
 
     ir_builder.CreateBr(loop);
     ir_builder.SetInsertPoint(loop);
+    bool sub_prop = false;
     for (const TreeNode *w = v->child; w; w = w->sibling) {
-        GenStmt(w, false);
+        GenStmt(w, sub_prop);
     }
-    ExValue conde = GenExpression(v->sibling->child, false);
+    ExValue conde = GenExpression(v->sibling->child, sub_prop);
     ir_builder.CreateCondBr(conde.Value(), after_repeat, loop);
 
     ir_builder.SetInsertPoint(after_repeat);
 }
 
-static void GenWhileStmt(const TreeNode *u, bool prop) {
+static void GenWhileStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
 
     llvm::BasicBlock *loop = LabelContext::NewBlock("loop_while");
@@ -452,16 +456,17 @@ static void GenWhileStmt(const TreeNode *u, bool prop) {
     ir_builder.CreateBr(cond);
 
     ir_builder.SetInsertPoint(loop);
-    GenStmt(v->sibling, false);
+    bool sub_prop = false;
+    GenStmt(v->sibling, sub_prop);
     ir_builder.CreateBr(cond);
     ir_builder.SetInsertPoint(cond);
-    ExValue conde = GenExpression(v->child, false);
+    ExValue conde = GenExpression(v->child, sub_prop);
     ir_builder.CreateCondBr(conde.Value(), loop, after_while);
 
     ir_builder.SetInsertPoint(after_while);
 }
 
-static void GenForStmt(const TreeNode *u, bool prop) {
+static void GenForStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
     std::string name(v->vals);
     v = v->sibling;
@@ -482,7 +487,8 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     ir_builder.CreateBr(cond);
 
     ir_builder.SetInsertPoint(loop);
-    GenStmt(v->sibling, false);
+    bool sub_prop = false;
+    GenStmt(v->sibling, sub_prop);
     ExValue loop_var_next;
     if (asc) {
         loop_var_next = DoSucc(loop_var);
@@ -495,7 +501,7 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     ir_builder.CreateBr(cond);
 
     ir_builder.SetInsertPoint(cond);
-    ExValue finale = GenExpression(v->child, false);
+    ExValue finale = GenExpression(v->child, sub_prop);
     ExValue conde;
     if (asc) {
         conde = CmpLessEq(loop_var, finale);
@@ -507,7 +513,7 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     ir_builder.SetInsertPoint(after_for);
 }
 
-static void GenCaseStmt(const TreeNode *u, bool prop) {
+static void GenCaseStmt(const TreeNode *u, bool &prop) {
     const TreeNode *v = u->child;
     ExValue case_eval = GenExpression(v->child, prop);
 
@@ -557,7 +563,7 @@ static void GenCaseStmt(const TreeNode *u, bool prop) {
     ir_builder.SetInsertPoint(after_case);
 }
 
-static void GenGotoStmt(const TreeNode *u, bool prop) {
+static void GenGotoStmt(const TreeNode *u, bool &prop) {
     int label = u->child->vali;
     llvm::BasicBlock *block = gen_c.GetBlock(label);
     if (block == nullptr) {
@@ -569,7 +575,7 @@ static void GenGotoStmt(const TreeNode *u, bool prop) {
     ir_builder.SetInsertPoint(after);
 }
 
-static void GenStmt(const TreeNode *u, bool prop) {
+static void GenStmt(const TreeNode *u, bool &prop) {
     u = u->child;
     if (strcmp(u->type, "INTEGER") == 0) {
         int label = u->vali;
@@ -580,7 +586,7 @@ static void GenStmt(const TreeNode *u, bool prop) {
         }
         ir_builder.CreateBr(block);
         ir_builder.SetInsertPoint(block);
-        gen_c.DeclLabel(label);
+        // gen_c.DeclLabel(label);
         prop = false;
         u = u->sibling;
     }
@@ -605,22 +611,20 @@ static void GenStmt(const TreeNode *u, bool prop) {
     }
 }
 
-static void GenCompoundStmt(const TreeNode *u, bool prop) {
+static void GenCompoundStmt(const TreeNode *u, bool &prop) {
     for (const TreeNode *v = u->child->child; v; v = v->sibling) {
-        prop = prop && !gen_c.HasLabel();
+        // prop = prop && !gen_c.HasLabel();
         GenStmt(v, prop);
     }
 }
 
 static void GenRoutineBody(const TreeNode *u) {
-    GenCompoundStmt(u->child, true);
+    bool prop = true;
+    GenCompoundStmt(u->child, prop);
 }
 
 static void GenRoutine(const TreeNode *u) {
-    auto v = u->child->rchild;
-    GenRoutinePart(v);
-    FunctionContext::MainFunction();
-    v = u->child->child;
+    auto v = u->child->child;
     GenLabelPart(v);
     v = v->sibling;
     GenConstPart(v);
@@ -628,6 +632,9 @@ static void GenRoutine(const TreeNode *u) {
     GenTypePart(v);
     v = v->sibling;
     GenVarPart(v);
+    v = v->sibling;
+    GenRoutinePart(v);
+    FunctionContext::MainFunction();
     
     GenRoutineBody(u->child->sibling);
 }

@@ -29,6 +29,10 @@ llvm::Type *TypeContext::Type(const sem::Type &type) {
     return Void();
 }
 
+llvm::PointerType *TypeContext::PtrType(const sem::Type &type) {
+    return Type(type)->getPointerTo();
+}
+
 llvm::Type *TypeContext::Int() {
     return llvm::Type::getInt32Ty(llvm_context);
 }

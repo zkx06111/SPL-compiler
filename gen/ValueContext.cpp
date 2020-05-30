@@ -7,12 +7,20 @@
 namespace gen {
 
 void ValueContext::NewVariable(const std::string &name, const sem::Type &type,
-        bool is_global) {
-    llvm::Type *ty = TypeContext::Type(type);
+        bool is_global, bool is_ref) {
+    llvm::Type *ty;
+    if (is_ref) {
+        ty = TypeContext::PtrType(type);
+    } else {
+        ty = TypeContext::Type(type);
+    }
     llvm::Value *value;
-    if (is_global || gen_c.IsGlobal()) {
+    if (is_global) {
         llvm::Constant *init;
-        if (type.type == sem::Type::INT) {
+        if (is_ref) {
+            init = llvm::ConstantPointerNull::get(
+                llvm::dyn_cast<llvm::PointerType>(ty));
+        } else if (type.type == sem::Type::INT) {
             init = llvm::dyn_cast<llvm::Constant>(ConstContext::Const(0));
         } else if (type.type == sem::Type::REAL) {
             init = llvm::dyn_cast<llvm::Constant>(ConstContext::Const(0.0));
@@ -31,6 +39,7 @@ void ValueContext::NewVariable(const std::string &name, const sem::Type &type,
     ExValue eval;
     eval.addr = value;
     eval.type = type;
+    eval.is_ref = is_ref;
     values[name] = eval;
 }
 
