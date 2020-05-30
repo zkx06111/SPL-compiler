@@ -10,6 +10,7 @@ var
     i, x: integer;
     j: char;
     s: student;
+    b: boolean;
     arr: array[-5..5] of student;
 procedure multwo(var x:integer);
 begin
@@ -28,4 +29,16 @@ begin
     multwo(s);
     multwo(i, i);
     multwo;
+    b := b and (i < 5);
+    if b and (i < 5) then begin
+        goto 5;
+    end else begin
+        writeln;
+    end;
+
+    if b and j then begin
+        writeln;
+    end else begin
+        writeln;
+    end;
 end.

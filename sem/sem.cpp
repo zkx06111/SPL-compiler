@@ -716,7 +716,18 @@ static bool CheckCompoundStmt(const TreeNode *u) {
 }
 
 static bool CheckIfStmt(const TreeNode *u) {
-    // TODO
+    std::pair<bool, Type> t = CheckExpression(u->child);
+    bool ret = t.first;
+    if (not IsAlmostSame(t.second, Type::Bool())) {
+        LOG_ERROR(u, SemError("if condition has to be boolean"));
+        ret = false;
+    }
+    if (not CheckStmt(getKthChild(u, 2))) {
+        ret = false;
+    }
+    if (getKthChild(u, 3)->child != nullptr && not CheckStmt(getKthChild(u, 3)->child)) {
+        ret = false;
+    }
     return true;
 }
 
