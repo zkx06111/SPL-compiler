@@ -462,14 +462,10 @@ static void GenWhileStmt(const TreeNode *u, bool prop) {
 }
 
 static void GenForStmt(const TreeNode *u, bool prop) {
-    gen_c.NewScope();
-    sem::sym_t.NewScope();
-
     const TreeNode *v = u->child;
     std::string name(v->vals);
     v = v->sibling;
     ExValue inite = GenExpression(v->child, prop);
-    gen_c.NewVariable(name, inite.type);
     ExValue loop_var = gen_c.GetVariable(name);
     Assign(loop_var, inite);
     loop_var.is_const = false;
@@ -508,8 +504,6 @@ static void GenForStmt(const TreeNode *u, bool prop) {
     }
     ir_builder.CreateCondBr(conde.Value(), loop, after_for);
 
-    gen_c.EndScope();
-    sem::sym_t.EndScope();
     ir_builder.SetInsertPoint(after_for);
 }
 
