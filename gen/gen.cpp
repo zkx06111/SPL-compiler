@@ -177,6 +177,7 @@ static std::vector<ExValue> GenExpressionList(const TreeNode *u, bool &prop) {
 }
 
 static ExValue GenFactor(const TreeNode *u, bool &prop) {
+    LOG("factor, type = " << u->type);
     if (strcmp(u->type, "INTEGER") == 0) {
         ExValue ret = ConstContext::ConstEVal(u->vali);
         return ret;
@@ -193,8 +194,13 @@ static ExValue GenFactor(const TreeNode *u, bool &prop) {
         std::string name(u->vals);
         if (gen_c.HasFunction(name)) {
             FuncSign sign = gen_c.GetFunction(name);
-            ExValue ret = sign.Call({});
-            return ret;
+            if (sign.fn_name == name && sign.args.size() > 0) {
+                ExValue ret = GetIDValue(name, prop);
+                return ret;
+            } else {
+                ExValue ret = sign.Call({});
+                return ret;
+            }
         } else {
             ExValue ret = GetIDValue(name, prop);
             return ret;
@@ -590,6 +596,7 @@ static void GenStmt(const TreeNode *u, bool &prop) {
         prop = false;
         u = u->sibling;
     }
+    LOG("stmt: type = " << u->type);
     if (strcmp(u->type, "assign_stmt") == 0) {
         GenAssignStmt(u, prop);
     } else if (strcmp(u->type, "proc_stmt") == 0) {

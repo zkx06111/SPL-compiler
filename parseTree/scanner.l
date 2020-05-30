@@ -77,6 +77,7 @@ ID ([a-zA-Z][_a-zA-Z0-9]*)
 ":" {SETLVAL(T_COLON); return COLON;}
 "*" {SETLVAL(T_MUL); return MUL;}
 "/" {SETLVAL(T_DIV); return DIV;}
+"%" {SETLVAL(T_MOD); return MOD;}
 "<>" {SETLVAL(T_UNEQUAL); return UNEQUAL;}
 "not" {SETLVAL(T_NOT); return NOT;}
 "+" {SETLVAL(T_PLUS); return PLUS;}

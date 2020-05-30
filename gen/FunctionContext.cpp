@@ -88,7 +88,7 @@ void FunctionContext::NewFunc(FuncSign &sign) {
         ++arg_it;
     }
     if (sign.ret.type != sem::Type::VOID) {
-        gen_c.NewVariable(sign.fn_name, sign.ret);
+        gen_c.NewVariable(sign.fn_name, sign.ret, false);
     }
 
     funcs[sign.fn_name] = sign;
