@@ -1,0 +1,33 @@
+program for_stmt;
+const
+    real_c = 5.5;
+type
+    student = record
+        id, age: integer;
+        gender: char;
+    end;
+var
+    i, x: integer;
+    j: char;
+    s: student;
+    b: boolean;
+    arr: array[-5..5] of student;
+procedure multwo(var x:integer);
+begin
+    x := x * 2;
+end;
+begin
+    read(i);
+    read(x);
+    read(j);
+    read('a');
+    read(s);
+    read(s.id);
+    read(arr[5]);
+    multwo(i);
+    multwo(j);
+    multwo(s);
+    multwo(i, i);
+    multwo;
+    b := b and (i < 5);
+end.

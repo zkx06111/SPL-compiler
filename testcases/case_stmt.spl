@@ -3,6 +3,7 @@ var
     i, x: integer;
     j: char;
 begin
+    writeln(chr(5.5));
     case i of
         1:
             begin
@@ -15,10 +16,11 @@ begin
         x:
             begin 
                 writeln('3');
+                writeln('4');
+                x := chr(5.5);
             end;
         j:
             begin
-                writeln('4');
             end;
     end;
 end.
