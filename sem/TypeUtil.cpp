@@ -16,7 +16,38 @@ Type RemoveSubrange(const Type &type) {
 }
 
 bool IsAlmostSame(const Type &a, const Type &b) {
-    return RemoveSubrange(a) == RemoveSubrange(b);
+    auto ta = RemoveSubrange(a);
+    auto tb = RemoveSubrange(b);
+    if (ta == tb) {
+        return true;
+    } else if (ta.type == sem::Type::ARRAY && tb.type == sem::Type::ARRAY) {
+        auto arr_a = sym_t.GetArray(a);
+        auto arr_b = sym_t.GetArray(b);
+        auto ind_a = arr_a.ind_type;
+        auto ind_b = arr_b.ind_type;
+        if (ind_a.type == sem::Type::BOOL) {
+            if (ind_b.type != sem::Type::BOOL) {
+                return false;
+            }
+        } else if (ind_a.type == sem::Type::ENUM) {
+            if (ind_a != ind_b) {
+                return false;
+            }
+        } else if (ind_a.type == sem::Type::SUBRANGE) {
+            if (ind_b.type != sem::Type::SUBRANGE) {
+                return false;
+            }
+            auto rng_a = sym_t.GetSubrange(ind_a);
+            auto rng_b = sym_t.GetSubrange(ind_b);
+            if (rng_a.type != rng_b.type || rng_a.l != rng_b.l ||
+                    rng_a.r != rng_b.r) {
+                return false;
+            }
+        }
+        return IsAlmostSame(arr_a.ele_type, arr_b.ele_type);
+    } else {
+        return false;
+    }
 }
 
 bool IsValidFunc(const Func &func) {
@@ -144,9 +175,12 @@ bool CanAssign(const Type &dst, const Type &src) {
     if (dst.type == Type::VOID || src.type == Type::VOID) {
         return false;
     }
+    if (IsAlmostSame(dst, src)) {
+        return true;
+    }
     Type dt = RemoveSubrange(dst);
     Type st = RemoveSubrange(src);
-    if (dt == st || (dt.type == Type::REAL && st.type == Type::INT)) {
+    if (dt.type == Type::REAL && st.type == Type::INT) {
         return true;
     } else {
         return false;

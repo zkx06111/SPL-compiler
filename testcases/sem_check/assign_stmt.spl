@@ -9,6 +9,10 @@ var
     e: real;
     arr: array[-5..5] of integer;
     r, s: student;
+    arr2: array[-5..5] of integer;
+    arr3: array[0..10] of integer;
+    arr4: array[-5..5] of real;
+    arr5: array[-5..5] of -5..5;
 begin
     c := arr['d'];
     b := e;
@@ -21,4 +25,8 @@ begin
     e := r.gender;
     a := r.qwq;
     r := s;
+    arr := arr2;
+    arr := arr3;
+    arr := arr4;
+    arr := arr5;
 end.
