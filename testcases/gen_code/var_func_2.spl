@@ -1,0 +1,14 @@
+program var_func;
+var
+    arr: array[boolean] of integer;
+
+procedure proc(var a: integer; b: integer);
+begin
+    a := 123 * b;
+end;
+
+begin
+    arr[true]:= 4;
+    proc(arr[false], arr[true]);
+    writeln(arr[false], arr[true]);
+end.

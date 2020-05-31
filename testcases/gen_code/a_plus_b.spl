@@ -1,0 +1,9 @@
+program test;
+var
+    a, b: integer;
+begin
+    read(a);
+    read(b);
+    a := a + b;
+    writeln(a);
+end.

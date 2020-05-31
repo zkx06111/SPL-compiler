@@ -1,0 +1,15 @@
+program var_func;
+var
+    g: integer;
+
+procedure var_fn(var v: integer);
+begin
+    v := v + 1;
+    g := g + 2;
+end;
+
+begin
+    g := 0;
+    var_fn(g);
+    writeln(g);
+end.

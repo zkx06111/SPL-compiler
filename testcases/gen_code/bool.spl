@@ -1,0 +1,24 @@
+program bool;
+var
+    b1, b2, br: boolean;
+    i1, i2, ir: integer;
+
+procedure pp;
+begin
+end;
+
+begin
+    pp;
+
+    b1 := false;
+    b2 := true;
+    br := b1 and b2;
+    br := b2 and b1;
+    br := b1 or b2;
+    br := b2 or b1;
+
+    i1 := 123;
+    i2 := 321;
+    ir := i1 and i2;
+    ir := i1 or i2;
+end.

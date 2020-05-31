@@ -303,7 +303,7 @@ static ExValue GenTerm(const TreeNode *u, bool &prop) {
                 ir_builder.CreateBr(after);
                 ir_builder.SetInsertPoint(bf);
                 ExValue rhs = GenFactor(u->child->sibling, prop);
-                Assign(ret, DoAnd(lhs, rhs));
+                Assign(ret, rhs);
                 ir_builder.CreateBr(after);
                 ir_builder.SetInsertPoint(after);
                 return ret;
@@ -352,7 +352,7 @@ static ExValue GenExpr(const TreeNode *u, bool &prop) {
                 ir_builder.CreateBr(after);
                 ir_builder.SetInsertPoint(bf);
                 ExValue rhs = GenFactor(u->child->sibling, prop);
-                Assign(ret, DoOr(lhs, rhs));
+                Assign(ret, rhs);
                 ir_builder.CreateBr(after);
                 ir_builder.SetInsertPoint(after);
                 return ret;
@@ -482,11 +482,11 @@ static void GenIfStmt(const TreeNode *u, bool &prop) {
     ir_builder.CreateBr(after_if);
 
     v = v->sibling->child;
+    ir_builder.SetInsertPoint(if_false);
     if (v != nullptr) {
-        ir_builder.SetInsertPoint(if_false);
         GenStmt(v, prop);
-        ir_builder.CreateBr(after_if);
     }
+    ir_builder.CreateBr(after_if);
 
     ir_builder.SetInsertPoint(after_if);
 }

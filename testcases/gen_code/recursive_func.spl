@@ -1,0 +1,24 @@
+program rec_func;
+var a: integer;
+
+function func(a: integer):integer;
+begin
+    if a <= 0 then
+        func := 1
+    else
+    begin
+        func := a;
+        func(a - 1);
+    end;
+end;
+
+function sig:integer;
+begin
+    sig := 1;
+    sig := sig + 1;
+end;
+
+begin
+    a := func(3);
+    writeln(a);
+end.

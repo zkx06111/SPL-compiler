@@ -1,0 +1,23 @@
+program nest_func;
+var
+    g0: integer;
+
+procedure proc1;
+var
+    g1: integer;
+procedure proc2;
+begin
+    g1 := g0 * 2;
+end;
+begin
+    g0 := 1;
+    proc2;
+    g0 := g0 + g1;
+end;
+
+begin
+    proc1;
+    writeln(g0);
+    proc1;
+    writeln(g0);
+end.

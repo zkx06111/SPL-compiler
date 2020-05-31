@@ -1,0 +1,17 @@
+program var_func;
+var g: integer;
+
+procedure add2(var a: integer);
+begin
+    a := a + 2;
+end;
+
+procedure varproc(var a: integer);
+begin
+    add2(a);
+end;
+
+begin
+    varproc(g);
+    writeln(g);
+end.

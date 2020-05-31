@@ -14,6 +14,8 @@ Cast(const sem::Type &dst_ty, const sem::Type &src_ty, llvm::Value *src_val) {
     auto dty = dst_ty.type;
     if (sty == sem::Type::INT && dty == sem::Type::REAL) {
         return ir_builder.CreateSIToFP(src_val, TypeContext::Real(), "cast_i2r");
+    } else if (sty == sem::Type::INT && dty == sem::Type::BOOL) {
+        return ir_builder.CreateTrunc(src_val, TypeContext::Bool(), "cast_i2b");
     } else if (sty == sem::Type::BOOL && dty == sem::Type::INT) {
         return ir_builder.CreateSExt(src_val, TypeContext::Int(), "cast_b2i");
     } else if (sty == sem::Type::CHAR && dty == sem::Type::INT) {

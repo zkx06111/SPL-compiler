@@ -1,0 +1,19 @@
+program rec_var;
+type
+    Rec = record
+        a: integer;
+        b: real;
+    end;
+var
+    a: Rec;
+
+procedure init_rec(var r: Rec);
+begin
+    r.a := 666;
+    r.b := 1.1;
+end;
+
+begin
+    init_rec(a);
+    writeln(a.a, a.b);
+end.

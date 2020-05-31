@@ -1,0 +1,38 @@
+program nest_func;
+var
+    g: real;
+
+procedure proc1(i: integer);
+var
+    a: integer;
+    b: real;
+procedure proc1_1(r: real);
+var
+    a: real;
+function my_sqrt(i: real):real;
+begin
+    my_sqrt := sqrt(i);
+end;
+begin
+    a := my_sqrt(r);
+    b := a;
+end;
+function proc1_2(b: integer):real;
+var
+    i: integer;
+begin
+    i := a + b;
+    proc1_2 := sqrt(i);
+end;
+begin
+    a := i;
+    proc1_1(3.3);
+    g := proc1_2(4);
+end;
+
+begin
+    proc1(1);
+    writeln(g);
+    proc1(1);
+    writeln(g);
+end.

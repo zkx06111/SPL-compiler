@@ -5,8 +5,6 @@
 #include "SysFunc.h"
 #include "TypeUtil.h"
 
-#include <iostream>
-
 namespace gen {
 
 llvm::Value *ExValue::Value() const {

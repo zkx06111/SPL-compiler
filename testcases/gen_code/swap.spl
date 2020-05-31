@@ -1,0 +1,21 @@
+program swap;
+var
+    a, b: real;
+
+procedure swap_r(var a, b: real);
+var t: real;
+begin
+    t := a;
+    a := b;
+    b := t;
+end;
+
+begin
+    read(a);
+    read(b);
+
+    writeln(a, b);
+    swap_r(a, b);
+
+    writeln(a, b);
+end.

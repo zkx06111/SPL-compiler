@@ -1,0 +1,103 @@
+program ttt;
+const
+    A = 61664;
+
+type
+    ENUM = (E_A, E_B, E_C);
+    REC = record
+        mem_a: integer;
+        mem_b: real;
+        mem_c: ENUM;
+    end;
+
+var
+    ia, ib, ic, i: integer;
+    ra, rb, rc: real;
+    ba, bb, br: boolean;
+    ca, cb, cc: char;
+    ea, eb, ec: ENUM;
+    rec: REC;
+    arr: array[-2..5] of integer;
+    recs: array[0..2] of REC;
+
+procedure proc1(var a: integer);
+var
+    b: integer;
+procedure sub_proc(var a: real);
+begin
+    a := a * a;
+end;
+begin
+    b := 2;
+    a := a / b;
+end;
+
+function func1(a: integer; b: integer): integer;
+begin
+    func1 := a mod b;
+end;
+
+begin
+    ia := 1;
+    ib := 2;
+    ic := ia + ib;
+
+    for i := 0 to 10 do
+    begin
+        ic := ic + 1;
+        ia := A;
+    end;
+
+    ib := ia;
+    ib := ic;
+
+    arr[0] := 123;
+    arr[1] := 1234;
+    arr[2] := 12345;
+    arr[3] := 123456;
+
+    ea := E_C;
+    ib := ord(ea);
+
+    rec.mem_a := ic;
+    rec.mem_b := 12.34;
+    rec.mem_c := ea;
+    recs[0] := rec;
+    writeln(rec.mem_b, rec.mem_a);
+
+    ia := 0;
+    repeat
+        ia := ia + 1;
+    until ia = 10;
+
+    while ia > 0 do
+    begin
+        ia := pred(ia);
+    end;
+
+    if ia <> 0 then
+        ia := sqr(ia)
+    else
+        ba := odd(ia);
+
+    if 1 = 0 then
+        ib := sqr(3)
+    else
+        ra := sqrt(8.0);
+
+    ra := ia;
+    rb := sqrt(ra);
+
+    proc1(ic);
+
+    ib := func1(ia, ic);
+
+    case ib of
+    0: writeln('A');
+    1: writeln('B');
+    2: writeln('C');
+    end;
+
+    writeln(ib);
+    read(ia);
+end.
