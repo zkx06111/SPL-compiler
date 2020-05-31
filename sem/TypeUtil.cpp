@@ -70,6 +70,7 @@ Type DoAdd(const Type &a, const Type &b) {
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
+    ta.is_lval = tb.is_lval = false;
     if (ta == tb) {
         if (ta.type == Type::INT || ta.type == Type::REAL ||
                 ta.type == Type::STRING) {
@@ -93,6 +94,7 @@ Type DoSub(const Type &a, const Type &b) {
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
+    ta.is_lval = tb.is_lval = false;
     if (ta == tb) {
         if (ta.type == Type::INT || ta.type == Type::REAL) {
             return ta;
@@ -111,6 +113,7 @@ Type DoMod(const Type &a, const Type &b) {
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
+    ta.is_lval = tb.is_lval = false;
     if (ta == tb && ta.type == Type::INT) {
         return ta;
     } else {
@@ -123,6 +126,7 @@ Type DoAnd(const Type &a, const Type &b) {
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
+    ta.is_lval = tb.is_lval = false;
     if (ta == tb && (ta.type == Type::INT || ta.type == Type::BOOL)) {
         return ta;
     } else {
@@ -135,6 +139,7 @@ Type DoCmp(const Type &a, const Type &b) {
     }
     Type ta = RemoveSubrange(a);
     Type tb = RemoveSubrange(b);
+    ta.is_lval = tb.is_lval = false;
     if (ta == tb) {
         if (ta.type == Type::INT || ta.type == Type::REAL ||
                 ta.type == Type::STRING || ta.type == Type::CHAR ||
@@ -156,6 +161,7 @@ Type DoCmp(const Type &a, const Type &b) {
 
 Type DoNot(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::BOOL) {
         return t;
     } else {
@@ -164,6 +170,7 @@ Type DoNot(const Type &type) {
 }
 Type DoNeg(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::REAL) {
         return t;
     } else {
@@ -196,6 +203,7 @@ Type DoAssign(const Type &dst, const Type &src) {
 
 Type DoAbs(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::REAL) {
         return t;
     } else {
@@ -204,6 +212,7 @@ Type DoAbs(const Type &type) {
 }
 Type DoChr(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT) {
         return Type::Char();
     } else {
@@ -212,6 +221,7 @@ Type DoChr(const Type &type) {
 }
 Type DoOdd(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT) {
         return Type::Bool();
     } else {
@@ -220,6 +230,7 @@ Type DoOdd(const Type &type) {
 }
 Type DoOrd(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::ENUM || t.type == Type::CHAR) {
         return Type::Int();
     } else {
@@ -228,6 +239,7 @@ Type DoOrd(const Type &type) {
 }
 Type DoPred(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::ENUM) {
         return t;
     } else {
@@ -236,6 +248,7 @@ Type DoPred(const Type &type) {
 }
 Type DoSqrt(const Type &type) {
     Type t = RemoveSubrange(type);
+    t.is_lval = false;
     if (t.type == Type::INT || t.type == Type::REAL) {
         return Type::Real();
     } else {

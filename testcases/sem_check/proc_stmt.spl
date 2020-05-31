@@ -29,5 +29,7 @@ begin
     multwo(s);
     multwo(i, i);
     multwo;
+    multwo(2);
+    multwo(i + i);
     b := b and (i < 5);
 end.

@@ -10,7 +10,7 @@ bool Func::CanCall(const std::vector<Type> &passed_args) const {
     }
     for (int i = 0, j = 0; i < args.size(); i++) {
         if (j < mut_args.size() && i == mut_args[j]) {
-            if (!passed_args[i].is_lhs) {
+            if (!passed_args[i].is_lval) {
                 return false;
             }
             if (!IsAlmostSame(passed_args[i], args[i])) {
@@ -32,7 +32,7 @@ void Func::ApplyArgs(const std::vector<Type> &passed_args) const {
     }
     for (int i = 0, j = 0; i < args.size(); i++) {
         if (j < mut_args.size() && i == mut_args[j]) {
-            if (!passed_args[i].is_lhs) {
+            if (!passed_args[i].is_lval) {
                 throw SemError("the " + OrderStr(i + 1) +
                     " parameter is variable and need an lval");
             }

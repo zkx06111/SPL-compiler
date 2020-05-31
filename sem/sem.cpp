@@ -377,7 +377,7 @@ static std::pair<bool, Type> CheckArrRec(const TreeNode *u) {
             }
         }
     }
-    lelem.is_lhs = true;
+    lelem.is_lval = true;
     return std::make_pair(ret, lelem);
 }
 
@@ -469,7 +469,7 @@ static std::pair<bool, Type> CheckID(const TreeNode *u) {
     try {
         if (sym_t.CheckVar(u->vals)) {
             rest = sym_t.GetVarType(u->vals);
-            rest.is_lhs = true;
+            rest.is_lval = true;
         }
         else if (sym_t.CheckFunc(u->vals)) {
             rest = sym_t.GetFunc(u->vals).ret;
@@ -843,7 +843,7 @@ static std::pair<bool, std::vector<Type> > CheckCaseExprList(const TreeNode *u, 
 static bool CheckCaseStmt(const TreeNode *u) {
     std::pair<bool, Type> cond = CheckExpression(u->child);
     std::pair<bool, std::vector<Type> > list = CheckCaseExprList(u->child->sibling, cond.second);
-    return true;
+    return cond.first && list.first;
 }
 
 static bool CheckGotoStmt(const TreeNode *u) {
