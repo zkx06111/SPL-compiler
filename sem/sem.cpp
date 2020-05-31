@@ -264,7 +264,12 @@ bool CheckFunctionHead(const TreeNode *u, bool is_func) {
 static bool CheckRoutine(const TreeNode *u);
 static bool CheckSubroutine(const TreeNode *u) {
     bool ret = CheckRoutine(u);
-    sym_t.EndScope();
+    try {
+        sym_t.EndScope();
+    } catch (const SemError &e) {
+        LOG_ERROR(u, e);
+        ret = false;
+    }
     return ret;
 }
 
@@ -843,9 +848,13 @@ static bool CheckCaseStmt(const TreeNode *u) {
 
 static bool CheckGotoStmt(const TreeNode *u) {
     int id = u->child->vali;
-    bool ret = sym_t.CheckLabel(id);
-    if (not ret) {
-        LOG_ERROR(u, SemError("label not found"));
+    bool ret = true;
+    try {
+        sym_t.GotoLabel(id);
+        sym_t.NeedLabel(id);
+    } catch (const SemError &e) {
+        LOG_ERROR(u, e);
+        ret = false;
     }
     return ret;
 }
@@ -881,6 +890,7 @@ static bool CheckStmt(const TreeNode *u)
     {
         try {
             sym_t.NeedLabel(u->child->vali);
+            sym_t.DeclLabel(u->child->vali);
         } catch (const SemError &e) {
             LOG_ERROR(u, e);
             return false;
@@ -910,7 +920,14 @@ static bool CheckRoutine(const TreeNode *u) {
 
 bool CheckSem(const TreeNode *u, const std::string &file_name) {
     src_file_name = file_name;
-    return CheckRoutine(u->child);
+    bool ret = CheckRoutine(u->child);
+    try {
+        sym_t.EndScope();
+    } catch (const SemError &e) {
+        LOG_ERROR(u, e);
+        ret = false;
+    }
+    return ret;
 }
 
 }

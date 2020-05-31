@@ -292,12 +292,11 @@ static ExValue GenTerm(const TreeNode *u, bool &prop) {
                     return rhs;
                 }
             } else {
-                ExValue cmp = CmpEqual(lhs, ConstContext::ConstEVal(false));
                 ExValue ret = gen_c.GetVariable("_#_bool_sc");
                 llvm::BasicBlock *bt = LabelContext::NewBlock("and_sc");
                 llvm::BasicBlock *bf = LabelContext::NewBlock("and_rhs");
                 llvm::BasicBlock *after = LabelContext::NewBlock("after_and");
-                ir_builder.CreateCondBr(cmp.Value(), bt, bf);
+                ir_builder.CreateCondBr(lhs.Value(), bf, bt);
                 ir_builder.SetInsertPoint(bt);
                 Assign(ret, ConstContext::ConstEVal(false));
                 ir_builder.CreateBr(after);
@@ -341,12 +340,11 @@ static ExValue GenExpr(const TreeNode *u, bool &prop) {
                     return rhs;
                 }
             } else {
-                ExValue cmp = CmpEqual(lhs, ConstContext::ConstEVal(true));
                 ExValue ret = gen_c.GetVariable("_#_bool_sc");
                 llvm::BasicBlock *bt = LabelContext::NewBlock("or_sc");
                 llvm::BasicBlock *bf = LabelContext::NewBlock("or_rhs");
                 llvm::BasicBlock *after = LabelContext::NewBlock("after_or");
-                ir_builder.CreateCondBr(cmp.Value(), bt, bf);
+                ir_builder.CreateCondBr(lhs.Value(), bt, bf);
                 ir_builder.SetInsertPoint(bt);
                 Assign(ret, ConstContext::ConstEVal(true));
                 ir_builder.CreateBr(after);

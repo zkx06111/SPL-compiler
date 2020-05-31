@@ -45,6 +45,7 @@ void SymbolTable::EndScope() {
     var_t.pop_back();
     const_t.pop_back();
     func_t.pop_back();
+    CheckLabels();
     label_t.pop_back();
 }
 
@@ -477,10 +478,28 @@ void SymbolTable::NewLabel(int label) {
     label_t.back().Insert(label);
 }
 
+void SymbolTable::DeclLabel(int label) {
+    if (label_t.back().CheckDecl(label)) {
+        throw
+            SemError("label " + std::to_string(label) + " has been used before");
+    }
+    label_t.back().Declare(label);
+}
+
+void SymbolTable::GotoLabel(int label) {
+    label_t.back().Goto(label);
+}
+
 void SymbolTable::NeedLabel(int label) const {
     if (!CheckLabel(label)) {
         throw SemError(
             "no label called '" + std::to_string(label) + "' is declared");
+    }
+}
+
+void SymbolTable::CheckLabels() const {
+    if (!label_t.back().CheckAll()) {
+        throw SemError("some goto statement goes to an unused label");
     }
 }
 

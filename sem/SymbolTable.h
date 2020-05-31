@@ -67,10 +67,13 @@ class SymbolTable {
         const std::vector<int> mut_args);
 
     void NewLabel(int label);
+    void DeclLabel(int label);
+    void GotoLabel(int label);
     void NeedLabel(int label) const;
 
   private:
     void NewConst(const std::string &name, const Type &type, const Enum &enm);
+    void CheckLabels() const;
 
     std::vector<IdTable> id_t;
     std::vector<TypeTable> type_t;
